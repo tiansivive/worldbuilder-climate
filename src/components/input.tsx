@@ -1,8 +1,6 @@
 
 import React from "react";
 
-
-
 type OwnProps = object;
 
 type Attributes = Omit<
@@ -10,23 +8,13 @@ type Attributes = Omit<
   keyof OwnProps
 >;
 
-export type TextInputProps = OwnProps & Attributes;
+export type InputProps = OwnProps & Attributes;
 
-export const TextInput =
-
-  React.forwardRef<HTMLInputElement, TextInputProps>(
-    (
-      {
-
-        type = "text",
-        ...props
-      },
-      ref
-    ) => <input
-        type={type}
-        ref={ref}
-        {...props}
-      />
-  )
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  (
+    { type = "text", ...props }
+    , ref
+  ) => <input type={type} ref={ref} {...props} />
+)
 
 
