@@ -4,7 +4,7 @@ import { range } from "fp-ts/lib/NonEmptyArray";
 
 export type Coords = {x: number, y: number}
 export const affectedCellIndices
-    : (center: Coords, brushSize: number) => Coords[]
+    : (centerIndices: Coords, brushSize: number) => Coords[]
     = (center, size) => {
  
         const radiusSquared = size * size;
