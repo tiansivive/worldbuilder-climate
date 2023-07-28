@@ -20,7 +20,7 @@ export const Q
         R.bind("Q_sol", () => Q_sol),
         R.bind("Qx_air_ice", ({ T_air }) =>  Qx_ice(T_air)),
         R.map(({ diffusion, T_air, T_land, T_ocean, Q_sol, Qx_air_ice }) => 
-             Q_sol + diffusion + Q_exchange(T_air, T_ocean) + Q_exchange(T_air, T_land) + Qx_air_ice
+             Q_sol + diffusion - Q_exchange(T_air, T_ocean) - Q_exchange(T_air, T_land) - Qx_air_ice
         )
     ))
 export const motionMD

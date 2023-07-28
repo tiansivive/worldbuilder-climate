@@ -4,8 +4,8 @@ export const dt = 1 // seconds
 export const convergenceThreshold = 1e-6; // Convergence threshold for equilibrium
 export const g = 9.81;  // Gravity acceleration (m/s^2)
 export const R = 287.05;  // Specific gas constant for dry air (J/(kg·K))
-export const k_air = 0.024;  // Thermal conductivity of air (W/(m·K))
-export const k_water = 0.6;  // Thermal conductivity of water (W/(m·K))
+export const k_air = 1e-5;  // Diffusivity of air (W/(m·K))
+export const k_water = 1e-7;  // Diffusivity of water (W/(m·K))
 export const k_ice = 2.22;  // Thermal conductivity of ice (W/(m·K))
 export const L_f = 334000;  // Latent heat of fusion for water (J/kg)
 export const rho_air = 1.225;  // Density of air (kg/m^3)
@@ -39,5 +39,5 @@ export const tau_tr_air = 0.6
 export const S0 = 1361 // W/m^2 
 
 export const h_max = 8000; // max height of the topography (m)
-
+export const h_transfer = 30 // heat transfer coefficient
 

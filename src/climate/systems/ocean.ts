@@ -20,7 +20,7 @@ export const Q
         R.bind("T_land", () => local(fields.land.temperature)),
         R.bind("Q_sol", () => Q_sol),
         R.map(({ diffusion, T_air, T_land, T_ice, T_ocean, Q_sol }) => 
-             tau_tr_air * (1 - albedo_water) * Q_sol + diffusion - radiative_loss(T_ocean) + Q_exchange(T_ocean, T_land) + Q_exchange(T_ocean, T_ice) + Q_exchange(T_ocean, T_air)
+             tau_tr_air * (1 - albedo_water) * Q_sol + diffusion - radiative_loss(T_ocean) - Q_exchange(T_ocean, T_land) - Q_exchange(T_ocean, T_ice) - Q_exchange(T_ocean, T_air)
         )
     ))
 export const motionMD

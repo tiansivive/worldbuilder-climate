@@ -15,9 +15,18 @@ export type Seconds = number
 
 export const toVec2D = (v: Velocity): Vec2D =>({ x: v.u, y: v.v})
 
-export function add(vec1: Vec2D, scalar: number): Vec2D {
-    return { x: vec1.x + scalar, y: vec1.y + scalar}
+export function add(scalar: number, vec1: Vec2D): Vec2D
+export function add(vecs: Vec2D[]): Vec2D 
+export function add(...args: [number, Vec2D] | [Vec2D[]]): Vec2D {
+    
+    if (args.length === 1) {
+        const [vec1, ...rest] = args[0]
+        return rest.reduce((sum, vec) => ({ x: sum.x + vec.x, y: sum.y + vec.y }), vec1)
+    } 
+    const [scalar, vec1] = args
+    return { x: vec1.x + scalar, y: vec1.y + scalar }
 }
+
 export function subtract(scalar: number, vec1: Vec2D): Vec2D
 export function subtract(vecs: Vec2D[]): Vec2D 
 export function subtract(...args: [number, Vec2D] | [Vec2D[]]): Vec2D {

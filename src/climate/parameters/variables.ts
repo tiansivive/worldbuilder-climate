@@ -4,7 +4,7 @@ import * as R from "fp-ts/Reader";
 import { dot, grad, laplacian, Local, local, Matrix, multiply, norm,Radians,Seconds,toVec2D,unit,Vec2D, Velocity } from "math/utils";
 
 import { SimulationEnv } from '../sim';
-import { albedo_atmosphere,alpha_drag,gamma, h_max, lambda_base,omega, R as airGasConstant, S0, sigma } from "./constants";
+import { albedo_atmosphere,alpha_drag,gamma, h_max, h_transfer,lambda_base,omega, R as airGasConstant, S0, sigma } from "./constants";
 
 export const latitude
     : (y: number, grid_height: number) => number
@@ -82,10 +82,8 @@ export const Q_sol
 
 export const Q_exchange
     : (tempField1: number, tempField2: number) => number
-    = (t1, t2) => {
-        const xCoefficient = 0.003 // TODO: improve
-        return xCoefficient * (t1 - t2)
-    }
+    = (t1, t2) => h_transfer * (t1 - t2)
+    
 
 
 export const radiative_loss

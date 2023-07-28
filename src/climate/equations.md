@@ -5,7 +5,7 @@ $$
 $$
 
 $$
-\frac{DT_{air}}{Dt} = \frac{1}{\rho_{air}c_{p_{air}}}(Q_{air} + \nabla^2 (k_{air}T_{air}))
+\frac{DT_{air}}{Dt} = \frac{Q_{air}}{\rho_{air}c_{p_{air}}}
 $$
 
 **Ocean**
@@ -15,19 +15,19 @@ $$
 $$
 
 $$
-\frac{DT_{water}}{Dt} = \frac{1}{\rho_{water}c_{p_{water}}}(Q_{water} + \nabla^2 (k_{water}T_{water}))
+\frac{DT_{water}}{Dt} = \frac{Q_{water}}{\rho_{water}c_{p_{water}}}
 $$
 
 **Land temperature**
 
 $$
-\frac{DT_{land}}{Dt} = \frac{1}{\rho_{land}c_{p_{land}}}(Q_{land} + \nabla^2 (k_{land}T_{land}))
+\frac{DT_{land}}{Dt} = \frac{Q_{land}}{\rho_{land}c_{p_{land}}}
 $$
 
 **Ice**
 
 $$
-\frac{DT_{ice}}{Dt} = \frac{1}{\rho_{ice}c_{p_{ice}}}(Q_{ice} + \nabla^2 (k_{ice}T_{ice}))
+\frac{DT_{ice}}{Dt} = \frac{Q_{ice}}{{I}\rho_{ice}c_{p_{ice}}}
 $$
 
 $$
@@ -40,20 +40,31 @@ $$
 
 **Heat budget for each system:**
 
-$$ Q_{air} = Q_{sol} -\sigma{T}_{air}^4 + (k_{air}\nabla^2 T_{air}) + Q_{exchange}^{air-land} + Q_{exchange}^{air-water} + Q_{exchange}^{air-ice} $$
+$$ Q_{air} = Q_{sol} -\sigma{T}_{air}^4 + (k_{air}\nabla^2 T_{air}) - Q_{exchange}^{air-land} - Q_{exchange}^{air-water} - Q_{exchange}^{air-ice} - C_{conv} (T_{air}-T_{0}) $$
 
-$$ Q_{water} = TR_{atm}(1−\alpha_{water}(I_{sea}))*Q_{sol} -\sigma{T}_{water}^4 + (k_{water}\nabla^2 T_{water}) + Q_{exchange}^{water-land} + Q_{exchange}^{water-air} + Q_{exchange}^{water-ice} $$
+$$ Q_{water} = TR_{atm}(1−\alpha_{water}(I_{sea}))*Q_{sol} -\sigma{T}_{water}^4 + (k_{water}\nabla^2 T_{water}) - Q_{exchange}^{water-land} - Q_{exchange}^{water-air} - Q_{exchange}^{water-ice} $$
 
-$$ Q_{land} = TR_{atm}(1−\alpha_{land})*Q_{sol} -\sigma{T}_{land}^4 + (k_{land}\nabla^2 T_{land}) + Q_{exchange}^{land-air} + Q_{exchange}^{land-water} $$
+$$ Q_{land} = TR_{atm}(1−\alpha_{land})*Q_{sol} -\sigma{T}_{land}^4 + (k_{land}\nabla^2 T_{land}) - Q_{exchange}^{land-air} - Q_{exchange}^{land-water} $$
 
-$$ Q_{ice} = TR_{atm}(1−\alpha(I_{sea}))*Q_{sol} -\sigma{T}_{ice}^4 − Q_{penetration}−Q_{exchange}^{water-ice} − Q_{exchange}^{air-ice}  $$
+$$ Q_{ice} = TR_{atm}(1−\alpha(I_{sea}))*Q_{sol} -\sigma{T}_{ice}^4 + (k_{ice}\nabla^2 T_{water}) - Q_{penetration}−Q_{exchange}^{water-ice} − Q_{exchange}^{air-ice}  $$
 
+**Heat exchanges**
+
+$$ Q_{exchange}^{water-air} = -Q_{exchange}^{air-water} = h_{water-air} (T_{water} - T_{air}) - L_vE $$
+
+$$ Q_{exchange}^{land-air} = -Q_{exchange}^{air-land} = h_{land-air} (T_{land} - T_{air}) $$
+
+$$ Q_{exchange}^{water-land} = -Q_{exchange}^{land-water} = h_{water-land} (T_{water} - T_{land}) $$
+
+$$ Q_{exchange}^{ice-air} = -Q_{exchange}^{air-ice} = h_{ice-air} (T_{ice} - T_{air}) $$
+
+$$ Q_{exchange}^{water-ice} = -Q_{exchange}^{ice-water} = h_{water-ice} (T_{water} - T_{ice}) $$
 
 **Stress** 
 
-$$ \tau_{wind} = \rho_{air} C_d \|v_{air}\|^2 $$
-$$ \tau_{water} = \rho_{water} C_d \|v_{water}\|^2 $$
-$$ \tau_{ice} = \rho_{ice} C_d \|v_{ice}\|^2 I $$
+$$ \tau_{wind} = \rho_{air} C_d \|v_{air}\|^2 \mathbf{u}_{air} $$
+$$ \tau_{water} = \rho_{water} C_d \|v_{water}\|^2 \mathbf{u}_{water} $$
+$$ \tau_{ice} = \rho_{ice} C_d \|v_{ice}\|^2 I \mathbf{u}_{ice} $$
 
 Definitions:
 
@@ -83,7 +94,6 @@ Where:
 - $R$ is the gas constant
 - $Q_{exchange}^{X-Y}$ denotes the heat exchange between systems X and Y
 - $\alpha_{land}$, $\alpha_{air}$, $\alpha_{water}$ are the respective albedo values for land, air, and water. 
-- $C_{wind}$, $C_{water}$, and $C_{ice}$ are coefficients characterizing the relative drag between the air, water, and ice. 
 - $\phi$ is the latitude of the point of interest.
 - $\delta$ is the axial tilt of the planet.
 - $\omega$ is the hour angle, which represents the time of day. It is zero at solar noon, and varies by 15° per hour (for an Earth-like planet with a 24-hour day), and is positive in the morning, and negative in the afternoon/evening.
@@ -102,7 +112,14 @@ The coefficients are subject to fine-tuning based on empirical observations or o
 - $h_{ice-air}$: Heat transfer coefficient for ice and air, roughly 10 W/(m^2*K)
 - $h_{ice-water}$: Heat transfer coefficient for ice and water, roughly 100 W/(m^2*K)
 - $T_{atm}$: Atmospheric transmission ratio, typically around 0.6 to 0.8 depending on cloud cover and other factors.
-- $\alpha_{air}$, $\alpha_{water}$, $\alpha_{land}$, $\alpha_{ice}$: Albedo values for air, water, land, and ice. Varies
-
-, but typically around 0.3 for water, 0.1-0.2 for land, and 0.8-0.9 for ice.  
+- $\alpha_{air}$, $\alpha_{water}$, $\alpha_{land}$, $\alpha_{ice}$: Albedo values for air, water, land, and ice, typically around 0.3 for water, 0.1-0.2 for land, and 0.8-0.9 for ice.  
 - $k_{air}$, $k_{water}$, $k_{land}$, $k_{ice}$: Thermal diffusivities of air, water, land, and ice. These values vary but can be looked up in a materials property database.
+- \(\sigma = 5.67 \times 10^{-8} \, \text{W/m}^2/\text{K}^4\) : Stefan-Boltzmann constant
+- \(L_v = 2.257 \times 10^6 \, \text{J/kg}\) : latent heat of evaporation
+- \(E = 0.01 \, \text{kg/m}^2/s\) : Evaporation rate
+- \(C_{conv} = 20 \, \text{W/m}^2/\text{K}\) : Convective cooling coefficient
+- \(S_0 = 1361 \, \text{W/m}^2\) : solar constant
+
+
+
+
