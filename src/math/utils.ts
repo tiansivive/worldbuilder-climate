@@ -14,6 +14,7 @@ export type Radians = number
 export type Seconds = number 
 
 export const toVec2D = (v: Velocity): Vec2D =>({ x: v.u, y: v.v})
+export const fromVec2D = (v: Vec2D): Velocity =>({ u: v.x, v: v.y})
 
 export function add(scalar: number, vec1: Vec2D): Vec2D
 export function add(vecs: Vec2D[]): Vec2D 
@@ -93,16 +94,27 @@ export const laplacian
     return lap;
     }
 
-export const localDerivative
-    : (field: Matrix<number>, velocity: Vec2D, materialDerivative: number) => Local<number>
-    = (f, v, Df) => F.pipe(
+
+export function localDerivative(field: Matrix<number>, velocity: Velocity, materialDerivative: number): Local<number>
+export function localDerivative(field: Matrix<number>, velocity: Velocity, materialDerivative: Vec2D): Local<Vec2D>
+export function localDerivative(...args: [Matrix<number>, Velocity, number] | [Matrix<number>, Velocity, Vec2D]) {
+ 
+    const [f, vel, Df] = args
+    const v = toVec2D(vel)
+    if (typeof Df === "number") {
+        return F.pipe(
             grad(f),
             R.map(gf => dot(v, gf)),
             R.map(advection => Df - advection)
         )
-  
+    }
     
-
+    return  F.pipe(
+            grad(f),
+            R.map(gf => dot(v, gf)),
+            R.map(advection => subtract(advection, Df))
+        )
+}
 
         
 

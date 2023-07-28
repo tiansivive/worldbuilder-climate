@@ -1,6 +1,5 @@
 
 import { blend, scale } from 'chroma-js';
-import { Matrix } from 'climate/sim';
 import { Input } from 'components/input';
 import { replicate } from 'fp-ts/lib/Array';
 import { CSSProperties, useCallback, useMemo, useState } from 'react';
@@ -9,6 +8,7 @@ import { set } from 'lib/objects/set';
 
 import { Canvas } from './canvas';
 import { World } from './world'
+import { System } from 'climate/sim';
 
 
 const max = { u: Number.NEGATIVE_INFINITY, v: Number.NEGATIVE_INFINITY }
@@ -24,7 +24,7 @@ function App() {
     brush: DEFAULT_BRUSH,
   })
 
-  const [winds, setWinds] = useState<Matrix<{ u: number, v: number }>>()
+  const [system, setSystem] = useState<System>()
 
 
   const sim: Worker = useMemo(() => {
@@ -34,7 +34,7 @@ function App() {
 
 
 
-      const data: Matrix<{ u: number, v: number }> = e.data.matrix
+      const system: System = e.data.state
 
       const us = data.flatMap(row => row.map(cell => cell.u))
       const vs = data.flatMap(row => row.map(cell => cell.v))

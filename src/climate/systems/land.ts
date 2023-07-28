@@ -19,7 +19,7 @@ export const Q
         )
     ))
 
-export const temperatureMD
+export const temperature
     : Local<number, SimulationEnv>
     = R.Functor.map(Q, _Q => _Q / (Climate.rho_land * Climate.cp_land))
     
