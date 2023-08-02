@@ -3,7 +3,8 @@ import Climate from 'climate/parameters/index'
 import { SimulationEnv } from 'climate/sim'
 import * as F from 'fp-ts/function'
 import * as R from 'fp-ts/Reader'
-import { Local,local } from 'math/utils'
+
+import { Local,local } from 'lib/math/utils'
 
 export const Q
     : Local<number, SimulationEnv>

@@ -2,16 +2,9 @@ import * as F from 'fp-ts/function'
 import * as R from "fp-ts/Reader";
 import { Reader } from "fp-ts/Reader";
 
-// Calculate gradient of a scalar field at a given point
-export type Matrix<T> = T[][]
+import { Matrix,Vec2D, Velocity } from './types';
 
-export type Vec2D = { x: number, y: number }
-export type Derivatives2D = { dx: number, dy: number }
 
-export type Velocity = { u: number, v: number }
-
-export type Radians = number 
-export type Seconds = number 
 
 export const toVec2D = (v: Velocity): Vec2D =>({ x: v.u, y: v.v})
 export const fromVec2D = (v: Vec2D): Velocity =>({ u: v.x, v: v.y})
@@ -60,7 +53,9 @@ export function norm(vector: Vec2D) {
     return Math.sqrt(dot(vector, vector));
 }
 
-export const unit = (vec: Vec2D) => divide(vec, norm(vec))
+export const unit = (vec: Vec2D) => vec.x === 0 && vec.y === 0
+    ? vec
+    : divide(vec, norm(vec))
 
 export type LocalEnv = { point: Vec2D, step: Vec2D, time: number }
 export type Local<A, T extends LocalEnv = LocalEnv> = Reader<T, A> 
@@ -69,29 +64,27 @@ export type Local<A, T extends LocalEnv = LocalEnv> = Reader<T, A>
 
 export const grad
     : (field: Matrix<number>) => Local<Vec2D>
-    = f => ({ point: { x, y }, step }) =>  {
-    const x_minus = x === 0            ? f[y][ f.length - 1 ] : f[y][x - 1] ;
-    const x_plus  = x === f.length - 1 ? f[y][ 0 ]            : f[y][x + 1] ;
-    
-    const y_minus = y === 0               ? f[y][x] : f[y - 1][x] ;
-    const y_plus  = y === f[0].length - 1 ? f[y][x] : f[y + 1][x] ;
+    = f => ({ point, step }) =>  {
+        const { up, down, left, right } = neighbours(f, point)
 
-    const gradX = (x_plus - x_minus) / (2 * step.x);   
-    const gradY = (y_plus - y_minus) / (2 * step.y);
+        const gradX = (right - left) / (2 * step.x);   
+        const gradY = (down - up) / (2 * step.y);
 
-    return { x: gradX, y: gradY };
+        return { x: gradX, y: gradY };
 }
 
 
 // Calculate Laplacian of a 2D scalar field at a specific point (x, y)
 export const laplacian
     : (field: Matrix<number>) => Local<number>
-    = f => ({ point: { x, y }, step }) =>  {
-  
-    const lap = (f[x+1][y] - 2*f[x][y] + f[x-1][y]) / (step.x * step.x)
-            + (f[x][y+1] - 2*f[x][y] + f[x][y-1]) / (step.y * step.y);
+    = f => ({ point, step }) =>  {
+        const { up, down, left, right } = neighbours(f, point)
+        const current = f[point.y][point.x]
+        const lap
+            = (right - 2 * current + left) / (step.x * step.x)
+            + (down - 2 * current + up) / (step.y * step.y)
 
-    return lap;
+        return lap;
     }
 
 
@@ -119,3 +112,17 @@ export function localDerivative(...args: [Matrix<number>, Velocity, number] | [M
         
 
 export const local = <F, O>(f: Matrix<F>) => R.asks<{ point: Vec2D } & O, F>(({ point }) => f[point.y][point.x])
+
+
+
+export const neighbours
+    : <T>(field: Matrix<T>, point: Vec2D) => { up: T, down: T, left: T, right: T }
+    = (f, { x, y }) => {
+        const left = x === 0            ? f[y][ f.length - 1 ] : f[y][x - 1] ;
+        const right  = x === f.length - 1 ? f[y][ 0 ]            : f[y][x + 1] ;
+        
+        const up = y === 0               ? f[y][x] : f[y - 1][x] ;
+        const down = y === f[0].length - 1 ? f[y][x] : f[y + 1][x];
+
+        return { left, right, up, down }
+    }

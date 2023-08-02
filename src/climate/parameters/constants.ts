@@ -1,6 +1,6 @@
 // Constants
 export const omega = 2 * Math.PI / (24 * 60 * 60);
-export const dt = 1 // seconds
+export const dt = 3600 // seconds
 export const convergenceThreshold = 1e-6; // Convergence threshold for equilibrium
 export const g = 9.81;  // Gravity acceleration (m/s^2)
 export const R = 287.05;  // Specific gas constant for dry air (J/(kg·K))
@@ -23,6 +23,7 @@ export const cp_water = 3993; // specific heat capacity of water (J/kg/K)
 export const cp_ice = 2093; // specific heat capacity of ice (J/kg/K)
 /** Stefan - Boltzmann constant (W/m^2/K^4) */
 export const sigma = 5.67e-8
+export const emissivity = 0.8
 
 // Coefficients for processes
 
@@ -35,7 +36,7 @@ export const beta = 0.00015;  // Thermal expansion coefficient of sea water (1/K
 export const gamma = 0.02; // parameter for the topographical forcing
 export const alpha_drag = 0.01; // parameter for the drag coefficient
 /** Transmission rate losses through atmosphere */
-export const tau_tr_air = 0.6 
+export const tau_tr_air = 0.6
 export const S0 = 1361 // W/m^2 
 
 export const h_max = 8000; // max height of the topography (m)

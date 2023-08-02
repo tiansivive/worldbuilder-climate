@@ -19,9 +19,11 @@
     "isolatedModules": true,
     "noEmit": true,
     "baseUrl": "src",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "typeRoots": ["./node_modules/@webgpu/types"]
   },
   "include": [
     "src"
-  ]
+  ],
+  
 }

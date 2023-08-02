@@ -1,11 +1,15 @@
 
+import * as A from 'fp-ts/Array'
 import * as F from 'fp-ts/function'
 import * as R from 'fp-ts/Reader'
-import { divide, grad, Local, local, multiply, subtract, toVec2D,Vec2D } from 'math/utils';
+import { values } from 'lodash/fp';
+
+import { Vec2D } from 'lib/math/types';
+import { add, divide, dot, grad, Local, local, multiply, neighbours, subtract, toVec2D } from 'lib/math/utils';
 
 import Climate from '../parameters';
 import { albedo_water,beta_water,cp_water, g, k_air, lambda_base, rho_air, rho_ice, rho_water, tau_tr_air } from '../parameters/constants';
-import { coriolis, crossDirection, diffusion, Q_exchange, Q_sol, radiative_loss } from '../parameters/variables';
+import { coriolis, crossDirection, diffusion, normal, Q_exchange, Q_sol, radiative_loss } from '../parameters/variables';
 import { SimulationEnv } from '../sim';
 
 
@@ -34,16 +38,43 @@ export const motionMD
         R.bind("ice_thickness", () => local(fields.ice.thickness)),
         R.bind("wind_stress", () => Climate.stress(fields.atmosphere.velocity, rho_air, lambda_base)),
         R.bind("ice_stress", () => Climate.stress(fields.ice.velocity, rho_ice, lambda_base)),
-        R.map(({ temp_grad, v_water, wind_stress, ice_thickness, ice_stress }) => 
-            subtract([
+        R.bind("boundary", () => boundary),
+        R.map(({ temp_grad, v_water, wind_stress, ice_thickness, ice_stress, boundary }) => {
+            const motion = subtract([
                 multiply(coriolis(point.y, size.h), crossDirection(v_water)),
                 multiply(g * beta_water, temp_grad),
                 divide(wind_stress, rho_water),
                 divide(multiply(ice_thickness, ice_stress), rho_water)
-        ])
+            ])
+
+            return add([motion, boundary])
+        }
        )
     ))
 
+
+export const boundary 
+    : Local<Vec2D, SimulationEnv>
+    = R.asksReader<SimulationEnv, Vec2D>(({ fields }) =>  F.pipe(
+        R.Do,
+        R.bind("n", () => normal(fields.elevation)),
+        R.bind("v", () => R.Functor.map(local(fields.ocean.velocity), toVec2D)),
+        R.bind("coastal", () => isCoastalCell),
+        R.map(({ coastal, v, n }) => {
+            if (!coastal) return { x: 0, y: 0 }
+            return multiply(- dot(v, n), n)
+        })
+    ))
+
+    
+export const isCoastalCell 
+    : Local<boolean, SimulationEnv>
+    = ({ fields, point }) => F.pipe(
+            neighbours(fields.elevation, point),
+            values,
+            A.some(n => n > 0)
+        )
+    
 
 
 export const temperatureMD

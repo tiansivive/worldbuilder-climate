@@ -1,9 +1,11 @@
 
-import { albedo_ice, beta_water, cp_ice, g, h_transfer, k_air, lambda_base, rho_air, rho_ice, rho_water, tau_tr_air } from 'climate/parameters/constants';
+import { albedo_ice, cp_ice, g, h_transfer, k_air, lambda_base, rho_air, rho_ice, rho_water, tau_tr_air } from 'climate/parameters/constants';
 import { coriolis, crossDirection, diffusion, drag, Q_exchange,Q_sol, radiative_loss } from 'climate/parameters/variables';
 import * as F from 'fp-ts/function'
 import * as R from "fp-ts/Reader";
-import { add, divide, grad, Local,local, multiply, subtract, toVec2D, Vec2D } from 'math/utils';
+
+import { Vec2D } from 'lib/math/types';
+import { add, divide, grad, Local,local, multiply, subtract, toVec2D } from 'lib/math/utils';
 
 import Climate from '../parameters';
 import { SimulationEnv } from '../sim';
@@ -51,6 +53,8 @@ export const motionMD
         R.bind("wind_stress", () => Climate.stress(fields.atmosphere.velocity, rho_air, lambda_base)),
         R.bind("water_stress", () => Climate.stress(fields.ocean.velocity, rho_water, lambda_base)),
         R.map(({ v_ice, drag, wind_stress, water_stress, grad_I, thickness }) => {
+            if (thickness <= 0) return { x: 0, y: 0 }
+            
             const mass = rho_ice * thickness
             const grad_pressure = multiply(-rho_ice * g, grad_I)
             const v = subtract([

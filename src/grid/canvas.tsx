@@ -1,9 +1,9 @@
-import { Matrix } from "climate/sim"
+
 import * as A from 'fp-ts/Array'
 import * as F from 'fp-ts/function'
 import { useCallback, useEffect, useRef } from "react"
 
-
+import { Matrix } from 'lib/math/types'
 
 
 

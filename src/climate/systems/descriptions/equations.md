@@ -66,7 +66,7 @@ $$ \tau_{wind} = \rho_{air} C_d \|v_{air}\|^2 \mathbf{u}_{air} $$
 $$ \tau_{water} = \rho_{water} C_d \|v_{water}\|^2 \mathbf{u}_{water} $$
 $$ \tau_{ice} = \rho_{ice} C_d \|v_{ice}\|^2 I \mathbf{u}_{ice} $$
 
-Definitions:
+**Definitions**
 
 $$ f_{topo}(h, \mathbf{v}_{air}) = −γ (h/h_{max})(\mathbf{v}_{air} \cdot \mathbf{\hat{n}}) \mathbf{\hat{n}} $$
 $$ \lambda(h) = \lambda_{base} + \alpha \|\nabla h\| $$
@@ -74,6 +74,11 @@ $$ \lambda(h) = \lambda_{base} + \alpha \|\nabla h\| $$
 $$
 Q_{sol}(\phi, \delta, \omega) = S_0 (1 - \alpha) \cos(\phi) \cos(\delta) \cos(\omega) + \sin(\phi) \sin(\delta)
 $$
+
+\[
+ω_i(t) = -i \times \left(\frac{360}{N}\right) + t \times \left(\frac{360}{P}\right)
+\]
+
 
 Where:
 - $D/Dt$ represents the material derivative.
@@ -98,6 +103,10 @@ Where:
 - $\delta$ is the axial tilt of the planet.
 - $\omega$ is the hour angle, which represents the time of day. It is zero at solar noon, and varies by 15° per hour (for an Earth-like planet with a 24-hour day), and is positive in the morning, and negative in the afternoon/evening.
 - $\alpha$ is the albedo, the reflectivity of the planet's surface.
+- \(i\) is the index of the column (ranging from 0 to N-1),
+- \(N\) is the total number of columns in the grid,
+- \(t\) is the current time in minutes,
+- \(P\) is the period of rotation of the planet in minutes (the time it takes for the planet to complete a full rotation).
 
 
 
@@ -119,7 +128,5 @@ The coefficients are subject to fine-tuning based on empirical observations or o
 - \(E = 0.01 \, \text{kg/m}^2/s\) : Evaporation rate
 - \(C_{conv} = 20 \, \text{W/m}^2/\text{K}\) : Convective cooling coefficient
 - \(S_0 = 1361 \, \text{W/m}^2\) : solar constant
-
-
 
 
