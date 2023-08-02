@@ -14,9 +14,9 @@ struct Params {
 @group(0) @binding(0) var<uniform>             params       : Params;
 
 @group(0) @binding(1) var<storage>             temperature  : array<f32>;
-// @group(0) @binding(2) var<storage>             elevation    : array<f32>; 
+@group(0) @binding(2) var<storage>             velocity     : array<vec2f>; 
 
-@group(0) @binding(2) var<storage, read_write> result       : array<f32>;
+@group(0) @binding(3) var<storage, read_write> result       : array<f32>;
 
 
         
@@ -111,13 +111,13 @@ fn Q_sol(p: vec2u) -> f32 {
     let lat_mid = 0.5 * (lat.x + lat.y); // x = max, y = min
     
     
-    let factor = (cos(lat_mid) * cos(params.tilt) * cos(w) + sin(lat_mid) * sin(params.tilt));
+    let projection = cos(lat_mid) * cos(params.tilt) * cos(w) + sin(lat_mid) * sin(params.tilt);
     
-    if (factor < 0.0){
+    if (projection < 0.0){
         return 0.0;
     }
-    let Q = cos(lat_mid) * (${S0} * (1 - ${albedo_atmosphere}) * factor);
-    return Q * (lat.x - lat.y);
+    let Q = cos(lat_mid) * (${S0} * (1 - ${albedo_atmosphere}) * projection);
+    return Q;
 }
 
 fn Q_air(p: vec2u, temp: f32) -> f32 {
@@ -136,9 +136,15 @@ fn main(
 ) {
     let i = index(cell.xy);
     let T = temperature[i];
-    result[i] = T + Q_air(cell.xy, T) / (${rho_air}*${cp_air});
-  
-    //result[i] = T;
+    let gradT = grad_temp(cell.xy);
+
+    let DT = Q_air(cell.xy, T) / (${rho_air}*${cp_air});
+    let advection = dot(velocity[i], gradT);
+
+    result[i] = T + DT - advection;
+    
+    //let lat = latitude(cell.y);
+    //result[i] = abs(lat.x - lat.y);
 
 }
 `

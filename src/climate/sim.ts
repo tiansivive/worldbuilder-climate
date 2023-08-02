@@ -83,7 +83,6 @@ export const runGPU
             device.createBuffer(pingPongBufferDesc("temperature_in", temperature.byteLength)),
             device.createBuffer(pingPongBufferDesc("temperature_out", temperature.byteLength))
         ]
-        console.log("Start:", temperature);
         device.queue.writeBuffer(temperature_buffers[0], 0, temperature);
 
 
@@ -94,8 +93,16 @@ export const runGPU
             size: elevation.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
         })
-        // device.queue.writeBuffer(elevation_buffer, 0, elevation);
-
+        const _v = createVelocityIC(options.width, options.height)
+        const velocity = new Float32Array(_v.flat(2));
+        //const elevation = new Float32Array(options.width * options.height).fill(T0);
+        const velocity_buffer = device.createBuffer({
+            label: "velocity",
+            size: velocity.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+        })
+        device.queue.writeBuffer(velocity_buffer, 0, velocity);
+        console.log("Velocity:", _v);
 
         const results_buffer = device.createBuffer({
             label: "staging",
@@ -119,7 +126,7 @@ export const runGPU
             },
         });
 
-        //const numTimeSteps = 24 * 7
+        //const numTimeSteps = 1000
         const numTimeSteps = 24 * 365 * 5
         //const numTimeSteps = 1
 
@@ -140,12 +147,12 @@ export const runGPU
                         binding: 1,
                         resource: { buffer: temperatureInputBuffer },
                     },
-                    // {
-                    //     binding: 2,
-                    //     resource: { buffer: elevation_buffer },
-                    // },
                     {
                         binding: 2,
+                        resource: { buffer: velocity_buffer },
+                    },
+                    {
+                        binding: 3,
                         resource: { buffer: temperatureOutputBuffer },
                     }
                 ],
@@ -155,9 +162,9 @@ export const runGPU
             const passEncoder = commandEncoder.beginComputePass()
             passEncoder.setPipeline(computePipeline);
             passEncoder.setBindGroup(0, bindGroup);
-            //passEncoder.dispatchWorkgroups(Math.ceil(options.width / 8), Math.ceil(options.height / 8));
+            passEncoder.dispatchWorkgroups(Math.ceil(options.width / 8), Math.ceil(options.height / 8));
             //passEncoder.dispatchWorkgroups(128, 128);
-            passEncoder.dispatchWorkgroups(4, 4)
+            // passEncoder.dispatchWorkgroups(4, 4)
             passEncoder.end();
             commandEncoder.copyBufferToBuffer(temperatureOutputBuffer, 0 /*Source offset */, results_buffer, 0 /* Destination offset */, temperature.byteLength);
 
@@ -165,14 +172,14 @@ export const runGPU
             device.queue.submit([commandEncoder.finish()]);
 
 
-            if (i % 24 * 15 === 0) {
+            if (i % (24 * 15) === 0) {
                 await results_buffer.mapAsync(GPUMapMode.READ, 0 /* Offset*/, temperature.byteLength);
                 const copyArrayBuffer = results_buffer.getMappedRange(0, temperature.byteLength);
                 const data = copyArrayBuffer.slice(0);
                 results_buffer.unmap();
                 const grid2d = _chunks(Array.from(new Float32Array(data)))
                 emit(i, grid2d)
-                console.log("Data", grid2d)
+                //console.log("Data", grid2d)
             }
             // console.log("End:", new Float32Array(data));
 
@@ -382,13 +389,13 @@ const bindGroupLayoutEntries: GPUBindGroupLayoutEntry[] = [
         visibility: GPUShaderStage.COMPUTE,
         buffer: { type: "read-only-storage" } // Cell state input buffer
     },
-    // {
-    //     binding: 2,
-    //     visibility: GPUShaderStage.COMPUTE,
-    //     buffer: { type: "read-only-storage" } // Cell state input buffer
-    // },
     {
         binding: 2,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "read-only-storage" } // Cell state input buffer
+    },
+    {
+        binding: 3,
         visibility: GPUShaderStage.COMPUTE,
         buffer: { type: "storage" } // Cell state output buffer
     }
@@ -399,4 +406,46 @@ const createBuffer = (device: GPUDevice, label: string, content: number[], usage
     const _array = new Float32Array(content);
     const buffer = device.createBuffer({ label, usage, size: _array.byteLength })
     device.queue.writeBuffer(buffer, 0, _array);
+}
+
+
+const createVelocityIC = (w: number, h: number) => {
+    const grid = create2DArray(h, w, [0, 0])
+    // Variables for wind speed
+    const uWindEquator = -0.25;   // Zonal wind speed at equator (easterly trade winds)
+    const uWindMidLat = 0.25;   // Zonal wind speed at mid-latitudes (westerlies)
+    const vWind = 0.1;           // Meridional wind speed
+
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            // Northern Hemisphere
+            const lat = (y / h) * 180 - 90;   // Latitude (-90 to 90)
+            let u, v;
+
+            // Define u component (zonal) based on latitude
+            if (Math.abs(lat) < 30) {
+                u = uWindEquator;
+            } else if (Math.abs(lat) < 60) {
+                u = uWindMidLat;
+            } else {
+                u = uWindEquator;
+            }
+
+            // Reverse direction in Southern Hemisphere
+            // if (lat < 0) {
+            //     u = -u;
+            // }
+
+            // Define v component (meridional) as constant, reversing direction in Southern Hemisphere
+            // eslint-disable-next-line prefer-const
+            v = lat >= 0 ? vWind : -vWind;
+
+            grid[y][x] = [u, y === 0 || y === h - 1 ? 0 : v];
+        }
+    }
+    const factor = (value: number) => (Math.random() / 4 + 0.875) * value
+
+    return grid.map(row => row.map(uv => uv.map(factor)))
+
+
 }

@@ -56,8 +56,8 @@ function App() {
         return
       }
       if (e.data.type === "GPU") {
-        console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(3), "days")
-
+        console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
+        //console.log("data", e.data.grid)
         gpuMax = maxMatrix(gpuMax, e.data.grid)
         gpuMin = minMatrix(gpuMin, e.data.grid)
         return setGridGPU(e.data.grid)
