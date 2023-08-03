@@ -1,6 +1,5 @@
-import { albedo_atmosphere, cp_air, k_air, rho_air, S0, sigma } from "./parameters/constants";
+import { albedo_atmosphere, cp_air, k_air, rho_air, S0, sigma } from "climate/parameters/constants"
 
-const inputs = ["temperature", "elevation"]
 export const code = `
 struct Params {
     circumference: f32,
