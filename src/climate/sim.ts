@@ -240,7 +240,8 @@ export const multipleSystemRuns
                 outputBuffers: [temp_out],
                 resultBuffers: [temp_result],
                 layout: temperature.bindGroupLayout,
-                pipeline: temperature.pipeline
+                pipeline: temperature.pipeline,
+                labels: { bindGroup: "temperature" }
             })
 
             const vel_cmd = setupPass(dev, cfg, {
@@ -248,7 +249,8 @@ export const multipleSystemRuns
                 outputBuffers: [velocity_out],
                 resultBuffers: [velocity_result],
                 layout: velocity.bindGroupLayout,
-                pipeline: velocity.pipeline
+                pipeline: velocity.pipeline,
+                labels: { bindGroup: "velocity" }
             })
 
             // End frame by passing array of command buffers to command queue for execution
@@ -558,7 +560,10 @@ type RunPass = {
     outputBuffers: GPUBuffer[],
     resultBuffers: GPUBuffer[],
     layout: GPUBindGroupLayout,
-    pipeline: GPUComputePipeline
+    pipeline: GPUComputePipeline,
+    labels?: {
+        bindGroup?: string
+    }
 }
 
 export const setupPass
@@ -569,6 +574,7 @@ export const setupPass
         const outBindings: GPUBindGroupEntry[] = run.outputBuffers.map((buffer, binding) => ({ binding: binding + inBindings.length, resource: { buffer } }))
 
         const bind_group = dev.createBindGroup({
+            label: run.labels?.bindGroup,
             layout: run.layout,
             entries: inBindings.concat(outBindings)
         })

@@ -2,6 +2,7 @@ import { dt, T0 } from "climate/parameters/constants";
 import { pingPongBufferDesc } from "climate/sim";
 
 import { Matrix } from "lib/math/types";
+import { maxMatrix } from "lib/math/utils";
 
 import * as ShaderT from './temperature.wgsl'
 import * as ShaderV from './velocity.wgsl'
@@ -107,6 +108,7 @@ const pipeline_T
         ]
         const bindGroupLayout = dev.createBindGroupLayout({ label: "temperature_group", entries })
         const pipeline = dev.createComputePipeline({
+            label: "Atmosphere temperature pipeline",
             layout: dev.createPipelineLayout({
                 label: "temperature_layout",
                 bindGroupLayouts: [bindGroupLayout]
@@ -153,6 +155,7 @@ const pipeline_V
 
         const bindGroupLayout = dev.createBindGroupLayout({ label: "velocity_group", entries })
         const pipeline = dev.createComputePipeline({
+            label: "Atmosphere velocity pipeline",
             layout: dev.createPipelineLayout({
                 label: "velocity_layout",
                 bindGroupLayouts: [bindGroupLayout]
@@ -170,11 +173,13 @@ const pipeline_V
 export const setupConfigUniforms
     : (device: GPUDevice, options: Config) => { buffer: GPUBuffer, values: Float32Array }
     = (dev, cfg) => {
+
         const values = new Float32Array([
             cfg.circumference,
             cfg.axial_tilt,
             cfg.angular_speed,
             cfg.time,
+            maxMatrix(0, cfg.elevation),
             cfg.step.dx,
             cfg.step.dy,
             cfg.size.w,

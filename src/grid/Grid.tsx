@@ -7,6 +7,7 @@ import { replicate } from 'fp-ts/lib/Array';
 import { CSSProperties, useCallback, useMemo, useState } from 'react';
 
 import { Matrix, Velocity } from 'lib/math/types';
+import { maxMatrix, minMatrix } from 'lib/math/utils';
 import { set } from 'lib/objects/set';
 
 import { Canvas } from './canvas';
@@ -48,12 +49,22 @@ function App() {
     const _sim = new Worker(new URL("../climate/sim.ts", import.meta.url))
     _sim.onmessage = e => {
 
+
+
+
       if (e.data.type === "DONE") {
         console.log("DONE")
 
         sim.terminate()
         setDone(true)
         return
+      }
+
+      if (e.data.type === "SYSTEM_GPU") {
+        console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
+        gpuMax = maxMatrix(gpuMax, e.data.system.temperature)
+        gpuMin = minMatrix(gpuMin, e.data.system.temperature)
+        return setGridGPU(e.data.system.temperature)
       }
       if (e.data.type === "GPU") {
         console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
@@ -240,8 +251,6 @@ const toElevation
   : (grid: Grid) => Matrix<number>
   = grid => grid.map(row => row.map(({ altitude }) => altitude < 0 ? 0 : altitude))
 
-const maxMatrix = (current: number, field: Matrix<number>) => field.reduce((_max, row) => Math.max(_max, ...row), current)
-const minMatrix = (current: number, field: Matrix<number>) => field.reduce((_min, row) => Math.min(_min, ...row), current)
 
 const maxVelocity = (current: Velocity, field: Matrix<Velocity>) => field.reduce((_max, row) => ({
   u: Math.max(_max.u, ...row.map(({ u }) => u)),
