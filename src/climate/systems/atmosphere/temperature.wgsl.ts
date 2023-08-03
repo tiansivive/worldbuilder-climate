@@ -1,4 +1,4 @@
-import { albedo_atmosphere, cp_air, k_air, rho_air, S0, sigma } from "climate/parameters/constants"
+import { albedo_atmosphere, cp_air, emissivity, k_air, rho_air, S0, sigma } from "climate/parameters/constants"
 
 export const code = `
 struct Params {
@@ -47,9 +47,9 @@ fn neighbourIndices(p: vec2u) -> vec4u {
     }
     var down: u32;
     if (p.y == u32(params.height) - 1) {
-        left = index(vec2(p.x, p.y));
+        down = index(vec2(p.x, p.y));
     } else {
-        left = index(vec2(p.x, p.y + 1));
+        down = index(vec2(p.x, p.y + 1));
     }
 
     return vec4(left, right, up, down);
@@ -64,14 +64,7 @@ fn grad_temp(p: vec2u) -> vec2f {
 
     return vec2f(gradX, gradY);
 }
-// fn grad_elevation(p: vec2u) -> vec2f {
-//     let indices = neighbourIndices(p);
 
-//     let gradX = (elevation[indices.y] - elevation[indices.x]) / (2.0 * params.dx);   
-//     let gradY = (elevation[indices.w] - elevation[indices.z]) / (2.0 * params.dy);
-
-//     return vec2f(gradX, gradY);
-// }
 
 fn laplacian_T(p: vec2u) -> f32 {
     let indices = neighbourIndices(p);
@@ -127,7 +120,7 @@ fn Q_air(p: vec2u, temp: f32) -> f32 {
     let radiative_loss = ${sigma} * pow(temp, 4);
     let diffusion = ${k_air} * laplacian_T(p) * temp;
 
-    return solar_radiance*1.0 - 0.75 * radiative_loss + diffusion;
+    return solar_radiance - ${emissivity} * radiative_loss + diffusion;
 
 }
 

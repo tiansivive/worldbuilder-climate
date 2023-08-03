@@ -57,7 +57,7 @@ function App() {
       }
 
       if (e.data.type === "GPU_SYSTEM") {
-        console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
+        console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30.5).toFixed(2), "months")
         gpuMax = maxMatrix(gpuMax, e.data.system.temperature)
         gpuMin = minMatrix(gpuMin, e.data.system.temperature)
         return setGridGPU(e.data.system.temperature)

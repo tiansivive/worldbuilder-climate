@@ -4,7 +4,7 @@ export const dt = 3600 // seconds
 export const convergenceThreshold = 1e-6; // Convergence threshold for equilibrium
 export const g = 9.81;  // Gravity acceleration (m/s^2)
 export const R = 287.05;  // Specific gas constant for dry air (J/(kg·K))
-export const k_air = 1e-5;  // Diffusivity of air (W/(m·K))
+export const k_air = 2e-2;  // Diffusivity of air (W/(m·K))
 export const k_water = 1e-7;  // Diffusivity of water (W/(m·K))
 export const k_ice = 2.22;  // Thermal conductivity of ice (W/(m·K))
 export const L_f = 334000;  // Latent heat of fusion for water (J/kg)
@@ -23,7 +23,7 @@ export const cp_water = 3993; // specific heat capacity of water (J/kg/K)
 export const cp_ice = 2093; // specific heat capacity of ice (J/kg/K)
 /** Stefan - Boltzmann constant (W/m^2/K^4) */
 export const sigma = 5.67e-8
-export const emissivity = 0.8
+export const emissivity = 0.75
 
 // Coefficients for processes
 

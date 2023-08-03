@@ -48,9 +48,9 @@ fn neighbourIndices(p: vec2u) -> vec4u {
     }
     var down: u32;
     if (p.y == u32(params.height) - 1) {
-        left = index(vec2(p.x, p.y));
+        down = index(vec2(p.x, p.y));
     } else {
-        left = index(vec2(p.x, p.y + 1));
+        down = index(vec2(p.x, p.y + 1));
     }
 
     return vec4(left, right, up, down);
@@ -110,7 +110,7 @@ fn coriolis(p: vec2u) -> f32 {
     let lat = latitude(p.y);
     let lat_mid = 0.5 * (lat.x + lat.y); // x = max, y = min
 
-    return 2.0 * ${omega} * sin(lat_mid);
+    return 2.0 * radians(params.rotation_speed) * sin(lat_mid);
 }
 
 fn crossK(vec: vec2f) -> vec2f {
@@ -157,7 +157,11 @@ fn main(
     let gradT = grad_temp(cell.xy);
     let gradV = grad_velocity(cell.xy);
 
-    let DT = - coriolis(cell.xy) * crossK(velocity[i]) - ${R} * gradT - drag(cell.xy) * velocity[i] - topographical_forcing(cell.xy) ;
+    let fc = - coriolis(cell.xy) * crossK(velocity[i]);
+    let pressure = - ${R} * gradT;
+    let drag_effect = - drag(cell.xy) * velocity[i];
+    let topo = - topographical_forcing(cell.xy);
+    let DT = fc + pressure + drag_effect + topo;
    
     // advection is dot product of vel and nabla times v
     // We compute gradV as the xy derivatives for uv, so grad.xy is uv_dx, grad.zw is uv_dy

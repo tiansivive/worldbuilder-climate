@@ -44,16 +44,16 @@ self.onmessage = (e: MessageEvent<Params>) => {
     // runGPU(e.data, Atmosphere.temp_code, (i, grid) => self.postMessage({ type: "GPU", iteration: i, grid }))
     //     .then(() => self.postMessage({ type: "DONE" }))
     const params: Params = e.data
-    const circumference = 32000
+    const circumference = 32000 * 1000
     const config: Config = {
         circumference,
-        axial_tilt: 0.0,
+        axial_tilt: 0, //Math.PI / 32,
         angular_speed: 0.004166,
         time: 0,
         size: { w: params.width, h: params.height },
         step: { dx: circumference / params.width, dy: circumference / params.height },
         elevation: params.elevation,
-        simTotalSteps: 24 * 365 * 1
+        simTotalSteps: 24 * 365 * 100
 
     }
     setupDevice()
@@ -70,7 +70,7 @@ export const multipleSystemRuns
         const { buffers, temperature, velocity } = AtmosphereGPU.pipelines(dev, cfg)
 
         for (let i = 0; i < cfg.simTotalSteps; i++) {
-            config.values[3] = i * dt // update time
+            config.values[3] = (i % (24 * 365)) * dt // update time
             dev.queue.writeBuffer(config.buffer, 0, config.values);
 
             const temp_in = buffers.temperature[i % 2]
@@ -102,7 +102,7 @@ export const multipleSystemRuns
             // End frame by passing array of command buffers to command queue for execution
             dev.queue.submit([temp_cmd, vel_cmd]);
 
-            if (i % (24 * 15) === 0) {
+            if (i % (24 * 265) === 0) {
                 const system = await reportState(temp_result, temp_in, velocity_result, velocity_in, cfg, i);
                 console.log(system)
             }
