@@ -7,10 +7,10 @@ import { values } from 'lodash/fp';
 import { Vec2D } from 'lib/math/types';
 import { add, divide, dot, grad, Local, local, multiply, neighbours, subtract, toVec2D } from 'lib/math/utils';
 
+import { SimulationEnv } from '../cpu.sim';
 import Climate from '../parameters';
-import { albedo_water,beta_water,cp_water, g, k_air, lambda_base, rho_air, rho_ice, rho_water, tau_tr_air } from '../parameters/constants';
+import { albedo_water, beta_water, cp_water, g, k_air, lambda_base, rho_air, rho_ice, rho_water, tau_tr_air } from '../parameters/constants';
 import { coriolis, crossDirection, diffusion, normal, Q_exchange, Q_sol, radiative_loss } from '../parameters/variables';
-import { SimulationEnv } from '../sim';
 
 
 export const Q
@@ -23,8 +23,8 @@ export const Q
         R.bind("T_ice", () => local(fields.ice.temperature)),
         R.bind("T_land", () => local(fields.land.temperature)),
         R.bind("Q_sol", () => Q_sol),
-        R.map(({ diffusion, T_air, T_land, T_ice, T_ocean, Q_sol }) => 
-             tau_tr_air * (1 - albedo_water) * Q_sol + diffusion - radiative_loss(T_ocean) - Q_exchange(T_ocean, T_land) - Q_exchange(T_ocean, T_ice) - Q_exchange(T_ocean, T_air)
+        R.map(({ diffusion, T_air, T_land, T_ice, T_ocean, Q_sol }) =>
+            tau_tr_air * (1 - albedo_water) * Q_sol + diffusion - radiative_loss(T_ocean) - Q_exchange(T_ocean, T_land) - Q_exchange(T_ocean, T_ice) - Q_exchange(T_ocean, T_air)
         )
     ))
 export const motionMD
@@ -49,13 +49,13 @@ export const motionMD
 
             return add([motion, boundary])
         }
-       )
+        )
     ))
 
 
-export const boundary 
+export const boundary
     : Local<Vec2D, SimulationEnv>
-    = R.asksReader<SimulationEnv, Vec2D>(({ fields }) =>  F.pipe(
+    = R.asksReader<SimulationEnv, Vec2D>(({ fields }) => F.pipe(
         R.Do,
         R.bind("n", () => normal(fields.elevation)),
         R.bind("v", () => R.Functor.map(local(fields.ocean.velocity), toVec2D)),
@@ -66,19 +66,18 @@ export const boundary
         })
     ))
 
-    
-export const isCoastalCell 
+
+export const isCoastalCell
     : Local<boolean, SimulationEnv>
     = ({ fields, point }) => F.pipe(
-            neighbours(fields.elevation, point),
-            values,
-            A.some(n => n > 0)
-        )
-    
+        neighbours(fields.elevation, point),
+        values,
+        A.some(n => n > 0)
+    )
+
 
 
 export const temperatureMD
     : Local<number, SimulationEnv>
     = R.Functor.map(Q, _Q => _Q / (rho_water * cp_water))
-    
-    
+

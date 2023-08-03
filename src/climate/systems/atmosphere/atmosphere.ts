@@ -1,4 +1,5 @@
 
+import { SimulationEnv } from 'climate/cpu.sim';
 import * as F from 'fp-ts/function'
 import * as R from 'fp-ts/Reader'
 
@@ -7,7 +8,6 @@ import { dot, grad, Local, local, multiply, subtract, toVec2D } from 'lib/math/u
 
 import { cp_air, gamma, h_max, k_air, R as airGasConstant, rho_air } from '../../parameters/constants';
 import { coriolis, crossDirection, diffusion, drag, normal, Q_exchange, Q_sol } from '../../parameters/variables';
-import { SimulationEnv } from '../../sim';
 import { Qx_ice } from '../ice';
 
 

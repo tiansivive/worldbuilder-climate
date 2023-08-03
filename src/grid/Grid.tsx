@@ -1,7 +1,6 @@
 
 import { blend, scale } from 'chroma-js';
-import { dt } from 'climate/parameters/constants';
-import { System } from 'climate/sim';
+import { System } from 'climate/cpu.sim';
 import { Input } from 'components/input';
 import { replicate } from 'fp-ts/lib/Array';
 import { CSSProperties, useCallback, useMemo, useState } from 'react';
@@ -49,9 +48,6 @@ function App() {
     const _sim = new Worker(new URL("../climate/sim.ts", import.meta.url))
     _sim.onmessage = e => {
 
-
-
-
       if (e.data.type === "DONE") {
         console.log("DONE")
 
@@ -60,55 +56,46 @@ function App() {
         return
       }
 
-      if (e.data.type === "SYSTEM_GPU") {
+      if (e.data.type === "GPU_SYSTEM") {
         console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
         gpuMax = maxMatrix(gpuMax, e.data.system.temperature)
         gpuMin = minMatrix(gpuMin, e.data.system.temperature)
         return setGridGPU(e.data.system.temperature)
       }
-      if (e.data.type === "GPU") {
-        console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
-        //console.log("data", e.data.grid)
-        gpuMax = maxMatrix(gpuMax, e.data.grid)
-        gpuMin = minMatrix(gpuMin, e.data.grid)
-        return setGridGPU(e.data.grid)
-      }
-      console.log("message", e)
-      const system: System = e.data.system
+      // if (e.data.type === "GPU") {
+      //   console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
+      //   //console.log("data", e.data.grid)
+      //   gpuMax = maxMatrix(gpuMax, e.data.grid)
+      //   gpuMin = minMatrix(gpuMin, e.data.grid)
+      //   return setGridGPU(e.data.grid)
+      // }
+      // console.log("message", e)
+      // const system: System = e.data.system
 
-      max.atmosphere.velocity = maxVelocity(max.atmosphere.velocity, system.fields.atmosphere.velocity)
-      min.atmosphere.velocity = minVelocity(min.atmosphere.velocity, system.fields.atmosphere.velocity)
-      max.atmosphere.temp = maxMatrix(max.atmosphere.temp, system.fields.atmosphere.temperature)
-      min.atmosphere.temp = minMatrix(min.atmosphere.temp, system.fields.atmosphere.temperature)
+      // max.atmosphere.velocity = maxVelocity(max.atmosphere.velocity, system.fields.atmosphere.velocity)
+      // min.atmosphere.velocity = minVelocity(min.atmosphere.velocity, system.fields.atmosphere.velocity)
+      // max.atmosphere.temp = maxMatrix(max.atmosphere.temp, system.fields.atmosphere.temperature)
+      // min.atmosphere.temp = minMatrix(min.atmosphere.temp, system.fields.atmosphere.temperature)
 
-      max.ocean.velocity = maxVelocity(max.ocean.velocity, system.fields.ocean.velocity)
-      min.ocean.velocity = minVelocity(min.ocean.velocity, system.fields.ocean.velocity)
-      max.ocean.temp = maxMatrix(max.ocean.temp, system.fields.ocean.temperature)
-      min.ocean.temp = minMatrix(min.ocean.temp, system.fields.ocean.temperature)
+      // max.ocean.velocity = maxVelocity(max.ocean.velocity, system.fields.ocean.velocity)
+      // min.ocean.velocity = minVelocity(min.ocean.velocity, system.fields.ocean.velocity)
+      // max.ocean.temp = maxMatrix(max.ocean.temp, system.fields.ocean.temperature)
+      // min.ocean.temp = minMatrix(min.ocean.temp, system.fields.ocean.temperature)
 
-      max.ice.velocity = maxVelocity(max.ice.velocity, system.fields.ice.velocity)
-      min.ice.velocity = minVelocity(min.ice.velocity, system.fields.ice.velocity)
-      max.ice.temp = maxMatrix(max.ice.temp, system.fields.ice.temperature)
-      min.ice.temp = minMatrix(min.ice.temp, system.fields.ice.temperature)
-      max.ice.thickness = maxMatrix(max.ice.thickness, system.fields.ice.thickness)
-      min.ice.thickness = minMatrix(min.ice.thickness, system.fields.ice.thickness)
+      // max.ice.velocity = maxVelocity(max.ice.velocity, system.fields.ice.velocity)
+      // min.ice.velocity = minVelocity(min.ice.velocity, system.fields.ice.velocity)
+      // max.ice.temp = maxMatrix(max.ice.temp, system.fields.ice.temperature)
+      // min.ice.temp = minMatrix(min.ice.temp, system.fields.ice.temperature)
+      // max.ice.thickness = maxMatrix(max.ice.thickness, system.fields.ice.thickness)
+      // min.ice.thickness = minMatrix(min.ice.thickness, system.fields.ice.thickness)
 
 
-      console.log("MAX:", max)
-      console.log("MIN:", min)
+      // console.log("MAX:", max)
+      // console.log("MIN:", min)
 
-      setSystem(system)
+      // setSystem(system)
 
-      if (e.data.type === "STEP") {
-        console.log("iteration", e.data.iteration, "months elapsed:", (e.data.iteration / 60 / 24 / 30).toFixed(2))
-        console.log("convergence", e.data.convergence)
-      }
-      if (e.data.type === "DONE") {
-        console.log("DONE")
-        //console.log(system)
-        console.log(gpuGrid)
-        sim.terminate()
-      }
+
     }
     return _sim
   }, [])

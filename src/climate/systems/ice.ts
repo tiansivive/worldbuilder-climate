@@ -1,24 +1,24 @@
 
 import { albedo_ice, cp_ice, g, h_transfer, k_air, lambda_base, rho_air, rho_ice, rho_water, tau_tr_air } from 'climate/parameters/constants';
-import { coriolis, crossDirection, diffusion, drag, Q_exchange,Q_sol, radiative_loss } from 'climate/parameters/variables';
+import { coriolis, crossDirection, diffusion, drag, Q_exchange, Q_sol, radiative_loss } from 'climate/parameters/variables';
 import * as F from 'fp-ts/function'
 import * as R from "fp-ts/Reader";
 
 import { Vec2D } from 'lib/math/types';
-import { add, divide, grad, Local,local, multiply, subtract, toVec2D } from 'lib/math/utils';
+import { add, divide, grad, Local, local, multiply, subtract, toVec2D } from 'lib/math/utils';
 
 import Climate from '../parameters';
-import { SimulationEnv } from '../sim';
+import { SimulationEnv } from '../cpu.sim';
 
 
 export const Qx_ice
     : (temperature: number) => Local<number, SimulationEnv>
-    = T => R.asksReader(({ fields }) =>  F.pipe(
-            R.Do,
-            R.bind("thickness", () => local(fields.ice.thickness)),
-            R.bind("T_ice",  () => local(fields.ice.temperature)),
-            R.map(({ thickness, T_ice }) => thickness > 0 ? h_transfer*(T - T_ice) : 0)
-        )
+    = T => R.asksReader(({ fields }) => F.pipe(
+        R.Do,
+        R.bind("thickness", () => local(fields.ice.thickness)),
+        R.bind("T_ice", () => local(fields.ice.temperature)),
+        R.map(({ thickness, T_ice }) => thickness > 0 ? h_transfer * (T - T_ice) : 0)
+    )
     )
 
 
@@ -54,7 +54,7 @@ export const motionMD
         R.bind("water_stress", () => Climate.stress(fields.ocean.velocity, rho_water, lambda_base)),
         R.map(({ v_ice, drag, wind_stress, water_stress, grad_I, thickness }) => {
             if (thickness <= 0) return { x: 0, y: 0 }
-            
+
             const mass = rho_ice * thickness
             const grad_pressure = multiply(-rho_ice * g, grad_I)
             const v = subtract([
@@ -62,12 +62,12 @@ export const motionMD
                 divide(grad_pressure, rho_ice),
                 water_stress,
                 multiply(drag, v_ice),
-            
+
             ])
             const total = add([v, wind_stress])
             return divide(total, mass)
         }
-       )
+        )
     ))
 
 
@@ -85,7 +85,6 @@ export const temperatureMD
         R.Do,
         R.bind("thickness", () => local(fields.ice.thickness)),
         R.bind("_Q", () => Q),
-        R.map(({_Q, thickness}) => thickness <= 0 ? 0 : _Q / (rho_ice * cp_ice))
+        R.map(({ _Q, thickness }) => thickness <= 0 ? 0 : _Q / (rho_ice * cp_ice))
     ))
-    
-    
+

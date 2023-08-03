@@ -1,6 +1,6 @@
 
 import Climate from 'climate/parameters/index'
-import { SimulationEnv } from 'climate/sim'
+import { SimulationEnv } from 'climate/cpu.sim'
 import * as F from 'fp-ts/function'
 import * as R from 'fp-ts/Reader'
 

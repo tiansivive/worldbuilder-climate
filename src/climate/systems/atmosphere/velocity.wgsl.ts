@@ -138,6 +138,10 @@ fn drag(p: vec2u) -> f32 {
 }
 
 fn topographical_forcing(p: vec2u) -> vec2f {
+    if(params.h_max == 0){
+        return vec2f(0.0, 0.0);
+    }
+
     let i = index(p);
     let n = normal(p);
     return -${gamma} * (elevation[i] / params.h_max) * dot(velocity[i], n) * n;
@@ -161,8 +165,8 @@ fn main(
 
     result[i] = velocity[i] + DT - advection;
     
-    //let lat = latitude(cell.y);
-    //result[i] = abs(lat.x - lat.y);
+    //result[i] = normal(cell.xy);
+   
 
 }
 `
