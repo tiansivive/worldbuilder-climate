@@ -4,6 +4,8 @@ export const code = `
 struct Params {
     circumference: f32,
     tilt: f32,
+    orbit_period: f32,
+    day_of_year: f32,
     rotation_speed: f32,
     time: f32,
     h_max: f32,
@@ -19,6 +21,7 @@ struct Params {
 @group(0) @binding(2) var<storage>             velocity     : array<vec2f>; 
 
 @group(0) @binding(3) var<storage, read_write> result       : array<f32>;
+@group(0) @binding(4) var<storage, read_write> debug       : array<f32>;
 
 
         
@@ -99,14 +102,19 @@ fn hour_omega(p: vec2u) -> f32 {
     return radians(omega);
 }
 
+fn seasonal_tilt_adjustment() -> f32 {
+    let year_angle = (2.0 * ${Math.PI}/params.orbit_period) * params.day_of_year;
+    return params.tilt * cos(year_angle);
+}
+
 fn Q_sol(p: vec2u) -> f32 {
 
     let w = hour_omega(p);
     let lat = latitude(p.y);
     let lat_mid = 0.5 * (lat.x + lat.y); // x = max, y = min
-    
-    
-    let projection = cos(lat_mid) * cos(params.tilt) * cos(w) + sin(lat_mid) * sin(params.tilt);
+    let tilt = seasonal_tilt_adjustment();
+
+    let projection = cos(lat_mid) * cos(tilt) * cos(w) + sin(lat_mid) * sin(tilt);
     
     if (projection < 0.0){
         return 0.0;
@@ -132,14 +140,18 @@ fn main(
     let i = index(cell.xy);
     let T = temperature[i];
     let gradT = grad_temp(cell.xy);
-
+    
     let DT = Q_air(cell.xy, T) / (${rho_air}*${cp_air});
     let advection = dot(velocity[i], gradT);
-
-    result[i] = T + DT - advection;
     
+    result[i] = T + DT - advection;
+
+    
+    let diffusion = ${k_air} * laplacian_T(cell.xy) * T;
+    debug[i] = diffusion;
+
     //let lat = latitude(cell.y);
-    //result[i] = abs(lat.x - lat.y);
+    //result[i] = ${k_air} * laplacian_T(cell.xy) * T;
 
 }
 `

@@ -1,9 +1,11 @@
-import { alpha_drag, gamma, lambda_base, omega, R } from "climate/parameters/constants"
+import { alpha_drag, gamma, lambda_base, R } from "climate/parameters/constants"
 
 export const code = `
 struct Params {
     circumference: f32,
     tilt: f32,
+    orbit_period: f32,
+    day_of_year: f32,
     rotation_speed: f32,
     time: f32,
     h_max: f32,
@@ -20,6 +22,7 @@ struct Params {
 @group(0) @binding(3) var<storage>             velocity     : array<vec2f>; 
 
 @group(0) @binding(4) var<storage, read_write> result       : array<vec2f>;
+@group(0) @binding(5) var<storage, read_write> debug       : array<f32>;
 
 
         
@@ -168,6 +171,7 @@ fn main(
     let advection = velocity[i].x * gradV.xy + velocity[i].y * gradV.zw;
 
     result[i] = velocity[i] + DT - advection;
+    debug[i] = 1.0;
     
     //result[i] = normal(cell.xy);
    

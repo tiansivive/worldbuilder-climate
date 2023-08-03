@@ -1,79 +1,77 @@
 **Atmosphere**
 
-$$
+\[
 \frac{D\mathbf{v}_{air}}{Dt} = -f_c \mathbf{v}_{air}\times\hat{k} -R \nabla T_{air} - \lambda_{drag}\mathbf{v}_{air} - f_{topo}
-$$
+\]
 
-$$
+\[
 \frac{DT_{air}}{Dt} = \frac{Q_{air}}{\rho_{air}c_{p_{air}}}
-$$
+\]
 
 **Ocean**
 
-$$
+\[
 \frac{D\mathbf{v}_{water}}{Dt} = -f_c \mathbf{v}_{water}\times\hat{k} - g\beta_{water}\nabla T_{water} + \tau_{wind}/\rho_{water} - I\tau_{ice}/\rho_{water}
-$$
+\]
 
-$$
+\[
 \frac{DT_{water}}{Dt} = \frac{Q_{water}}{\rho_{water}c_{p_{water}}}
-$$
+\]
 
 **Land temperature**
 
-$$
+\[
 \frac{DT_{land}}{Dt} = \frac{Q_{land}}{\rho_{land}c_{p_{land}}}
-$$
+\]
 
 **Ice**
 
-$$
+\[
 \frac{DT_{ice}}{Dt} = \frac{Q_{ice}}{{I}\rho_{ice}c_{p_{ice}}}
-$$
+\]
 
-$$
+\[
 \frac{DI}{Dt} = P_{snow} + P_{freeze} - P_{melt} - P_{sublim} + \frac{Q_{ice}}{L_f \rho_{ice}}
-$$
+\]
 
-$$
+\[
 m_{ice} \frac{D\mathbf{v}_{ice}}{Dt} = -f_c \mathbf{v}_{ice}\times\hat{k} - \frac{1}{\rho_{ice}}\nabla p_{ice} + \tau_{air} - \tau_{water} - \lambda_{drag}\mathbf{v}_{ice}
-$$
+\]
 
 **Heat budget for each system:**
 
-$$ Q_{air} = Q_{sol} -\sigma{T}_{air}^4 + (k_{air}\nabla^2 T_{air}) - Q_{exchange}^{air-land} - Q_{exchange}^{air-water} - Q_{exchange}^{air-ice} - C_{conv} (T_{air}-T_{0}) $$
+\[ Q_{air} = Q_{sol} -\sigma{T}_{air}^4 - Q_{exchange}^{air-land} - Q_{exchange}^{air-water} - Q_{exchange}^{air-ice} - C_{conv} (T_{air}-T_{0}) \]
 
-$$ Q_{water} = TR_{atm}(1−\alpha_{water}(I_{sea}))*Q_{sol} -\sigma{T}_{water}^4 + (k_{water}\nabla^2 T_{water}) - Q_{exchange}^{water-land} - Q_{exchange}^{water-air} - Q_{exchange}^{water-ice} $$
+\[ Q_{water} = TR_{atm}(1−\alpha_{water}(I_{sea}))*Q_{sol} -\sigma{T}_{water}^4 - Q_{exchange}^{water-land} - Q_{exchange}^{water-air} - Q_{exchange}^{water-ice} \]
 
-$$ Q_{land} = TR_{atm}(1−\alpha_{land})*Q_{sol} -\sigma{T}_{land}^4 + (k_{land}\nabla^2 T_{land}) - Q_{exchange}^{land-air} - Q_{exchange}^{land-water} $$
+\[ Q_{land} = TR_{atm}(1−\alpha_{land})*Q_{sol} -\sigma{T}_{land}^4 + (k_{land}\nabla^2 T_{land}) - Q_{exchange}^{land-air} - Q_{exchange}^{land-water} \]
 
-$$ Q_{ice} = TR_{atm}(1−\alpha(I_{sea}))*Q_{sol} -\sigma{T}_{ice}^4 + (k_{ice}\nabla^2 T_{water}) - Q_{penetration}−Q_{exchange}^{water-ice} − Q_{exchange}^{air-ice}  $$
+\[ Q_{ice} = TR_{atm}(1−\alpha(I_{sea}))*Q_{sol} -\sigma{T}_{ice}^4 + (k_{ice}\nabla^2 T_{water}) - Q_{penetration}−Q_{exchange}^{water-ice} − Q_{exchange}^{air-ice}  \]
 
 **Heat exchanges**
 
-$$ Q_{exchange}^{water-air} = -Q_{exchange}^{air-water} = h_{water-air} (T_{water} - T_{air}) - L_vE $$
+\[ Q_{exchange}^{water-air} = -Q_{exchange}^{air-water} = h_{water-air} (T_{water} - T_{air}) - L_vE \]
 
-$$ Q_{exchange}^{land-air} = -Q_{exchange}^{air-land} = h_{land-air} (T_{land} - T_{air}) $$
+\[ Q_{exchange}^{land-air} = -Q_{exchange}^{air-land} = h_{land-air} (T_{land} - T_{air}) \]
 
-$$ Q_{exchange}^{water-land} = -Q_{exchange}^{land-water} = h_{water-land} (T_{water} - T_{land}) $$
+\[ Q_{exchange}^{water-land} = -Q_{exchange}^{land-water} = h_{water-land} (T_{water} - T_{land}) \]
 
-$$ Q_{exchange}^{ice-air} = -Q_{exchange}^{air-ice} = h_{ice-air} (T_{ice} - T_{air}) $$
+\[ Q_{exchange}^{ice-air} = -Q_{exchange}^{air-ice} = h_{ice-air} (T_{ice} - T_{air}) \]
 
-$$ Q_{exchange}^{water-ice} = -Q_{exchange}^{ice-water} = h_{water-ice} (T_{water} - T_{ice}) $$
+\[ Q_{exchange}^{water-ice} = -Q_{exchange}^{ice-water} = h_{water-ice} (T_{water} - T_{ice}) \]
 
 **Stress** 
 
-$$ \tau_{wind} = \rho_{air} C_d \|v_{air}\|^2 \mathbf{u}_{air} $$
-$$ \tau_{water} = \rho_{water} C_d \|v_{water}\|^2 \mathbf{u}_{water} $$
-$$ \tau_{ice} = \rho_{ice} C_d \|v_{ice}\|^2 I \mathbf{u}_{ice} $$
+\[ \tau_{wind} = \rho_{air} C_d \|v_{air}\|^2 \mathbf{u}_{air} \]
+\[ \tau_{water} = \rho_{water} C_d \|v_{water}\|^2 \mathbf{u}_{water} \]
+\[ \tau_{ice} = \rho_{ice} C_d \|v_{ice}\|^2 I \mathbf{u}_{ice} \]
 
 **Definitions**
 
-$$ f_{topo}(h, \mathbf{v}_{air}) = −γ (h/h_{max})(\mathbf{v}_{air} \cdot \mathbf{\hat{n}}) \mathbf{\hat{n}} $$
-$$ \lambda(h) = \lambda_{base} + \alpha \|\nabla h\| $$
+\[ f_{topo}(h, \mathbf{v}_{air}) = −γ (h/h_{max})(\mathbf{v}_{air} \cdot \mathbf{\hat{n}}) \mathbf{\hat{n}} \]
+\[ \lambda(h) = \lambda_{base} + \alpha \|\nabla h\| \]
 
-$$
-Q_{sol}(\phi, \delta, \omega) = S_0 (1 - \alpha) \cos(\phi) \cos(\delta) \cos(\omega) + \sin(\phi) \sin(\delta)
-$$
+\[ Q_{sol}(\phi, \delta, \omega) = cos(\phi)[S_0 (1 - \alpha) \cos(\phi) \cos(\delta) \cos(\omega) + \sin(\phi) \sin(\delta)] \]
 
 \[
 ω_i(t) = -i \times \left(\frac{360}{N}\right) + t \times \left(\frac{360}{P}\right)

@@ -7,11 +7,16 @@ import { maxMatrix } from "lib/math/utils";
 import * as ShaderT from './temperature.wgsl'
 import * as ShaderV from './velocity.wgsl'
 
-type Config = {
+export type Config = {
     /** Meters */
     circumference: number,
     /** Radians */
     axial_tilt: number,
+    /** In days */
+    orbit_period: number,
+
+    /** current day of the year */
+    day_of_year: number,
     /** Degrees per second */
     angular_speed: number,
     /** seconds */
@@ -27,37 +32,6 @@ type Config = {
  */
 type BufferSet = [GPUBuffer, GPUBuffer, GPUBuffer]
 
-type Pipeline = {
-    layout: GPUBindGroupLayout,
-    compute: GPUComputePipeline
-}
-
-type PassDependencies = {
-    configBuffer: GPUBuffer,
-    buffers: {
-        elevation: GPUBuffer
-        temperature: BufferSet,
-        velocity: BufferSet,
-    },
-    pipelines: {
-        temperature: Pipeline,
-        velocity: Pipeline
-    }
-
-
-    commandEncoder: GPUCommandEncoder,
-
-}
-
-type RunPass = {
-    /** `FIFO` order!\
-     *  Buffers get sent to GPU shader in order */
-    inputBuffers: GPUBuffer[]
-    outputBuffers: GPUBuffer[],
-    resultBuffers: GPUBuffer[],
-    layout: GPUBindGroupLayout,
-    pipeline: GPUComputePipeline
-}
 
 
 
@@ -104,6 +78,11 @@ const pipeline_T
                 binding: 3,
                 visibility: GPUShaderStage.COMPUTE,
                 buffer: { type: "storage" } // temperature state output buffer
+            },
+            {
+                binding: 4,
+                visibility: GPUShaderStage.COMPUTE,
+                buffer: { type: "storage" } // debug state output buffer
             }
         ]
         const bindGroupLayout = dev.createBindGroupLayout({ label: "temperature_group", entries })
@@ -150,7 +129,13 @@ const pipeline_V
                 binding: 4,
                 visibility: GPUShaderStage.COMPUTE,
                 buffer: { type: "storage" } // velocity state output buffer
-            }
+            },
+            {
+                binding: 5,
+                visibility: GPUShaderStage.COMPUTE,
+                buffer: { type: "storage" } // debug state output buffer
+            },
+
         ]
 
         const bindGroupLayout = dev.createBindGroupLayout({ label: "velocity_group", entries })
@@ -177,6 +162,8 @@ export const setupConfigUniforms
         const values = new Float32Array([
             cfg.circumference,
             cfg.axial_tilt,
+            cfg.orbit_period,
+            cfg.day_of_year,
             cfg.angular_speed,
             cfg.time,
             maxMatrix(0, cfg.elevation),
