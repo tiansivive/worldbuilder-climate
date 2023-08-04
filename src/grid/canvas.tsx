@@ -13,7 +13,7 @@ export const Canvas
 
         const ref = useRef<HTMLCanvasElement>()
         const grid = useRef<Matrix<unknown>>(state)
-
+        const size = CELL_SIZE / (width / 32)
 
 
         useEffect(() => { grid.current = state }, [state])
@@ -27,20 +27,18 @@ export const Canvas
                 A.bind("cell", ({ row }) => row.cols.map((value, i) => ({ x: i, y: row.i, value }))),
                 A.map(({ cell }) => {
                     ctx.fillStyle = deriveColor(cell.value)
-                    ctx.fillRect(cell.x * CELL_SIZE + cell.x, cell.y * CELL_SIZE + cell.y, CELL_SIZE, CELL_SIZE)
+                    ctx.fillRect(cell.x * size + cell.x, cell.y * size + cell.y, size, size)
 
                 })
             )
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [state])
+
+        }, [state, deriveColor, size])
 
 
 
 
-        const widthWithGaps = width * CELL_SIZE + width
-        const heightWithGaps = height * CELL_SIZE + height
-
-
+        const widthWithGaps = width * size + width
+        const heightWithGaps = height * size + height
 
         return <canvas
             id="canvas"

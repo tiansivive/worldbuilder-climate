@@ -7,10 +7,10 @@ import { values } from 'lodash/fp';
 import { Vec2D } from 'lib/math/types';
 import { add, divide, dot, grad, Local, local, multiply, neighbours, subtract, toVec2D } from 'lib/math/utils';
 
-import { SimulationEnv } from '../cpu.sim';
-import Climate from '../parameters';
-import { albedo_water, beta_water, cp_water, g, k_air, lambda_base, rho_air, rho_ice, rho_water, tau_tr_air } from '../parameters/constants';
-import { coriolis, crossDirection, diffusion, normal, Q_exchange, Q_sol, radiative_loss } from '../parameters/variables';
+import { SimulationEnv } from '../../cpu.sim';
+import Climate from '../../parameters';
+import { albedo_water, beta_water, cp_water, g, k_air, lambda_base, rho_air, rho_ice, rho_water, tau_tr_air } from '../../parameters/constants';
+import { coriolis, crossDirection, diffusion, normal, Q_exchange, Q_sol, radiative_loss } from '../../parameters/variables';
 
 
 export const Q

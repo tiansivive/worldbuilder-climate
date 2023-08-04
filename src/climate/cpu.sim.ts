@@ -11,7 +11,7 @@ import { Params } from './sim';
 import * as Atmosphere from './systems/atmosphere/atmosphere';
 import * as Ice from './systems/ice';
 import * as Land from './systems/land';
-import * as Ocean from './systems/ocean';
+import * as Ocean from './systems/ocean/ocean';
 
 export const run
     : (params: Params, emit: (iteration: number, state: System) => void) => Promise<System>

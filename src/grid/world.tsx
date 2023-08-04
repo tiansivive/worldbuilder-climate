@@ -21,6 +21,8 @@ export const World
         const interval = useRef<NodeJS.Timer>()
         const ctx = ref.current?.getContext("2d")
 
+        const cell_size = CELL_SIZE / (state.width / 64)
+
         useEffect(() => { grid.current = state.grid }, [state.grid])
 
         const drawInitialGrid = useCallback(() => {
@@ -31,22 +33,22 @@ export const World
                 A.bind("cell", ({ row }) => row.cols.map((value, i) => ({ x: i, y: row.i, value }))),
                 A.map(({ cell }) => {
                     ctx.fillStyle = deriveColor(cell.value.altitude)
-                    ctx.fillRect(cell.x * CELL_SIZE + cell.x, cell.y * CELL_SIZE + cell.y, CELL_SIZE, CELL_SIZE)
+                    ctx.fillRect(cell.x * cell_size + cell.x, cell.y * cell_size + cell.y, cell_size, cell_size)
 
                 })
             )
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [state.grid])
+
+        }, [ctx, state.grid, cell_size])
 
 
         const validCoords = useCallback(({ x, y }: Coords) => 0 <= x && x < state.width && 0 <= y && y < state.height, [state.height, state.width])
 
         const updateCursor = useCallback((e: MouseEvent) => {
             const pos = { x: e.offsetX, y: e.offsetY }
-            const indices = { x: Math.floor(e.offsetX / (CELL_SIZE + 1)), y: Math.floor(e.offsetY / (CELL_SIZE + 1)) }
+            const indices = { x: Math.floor(e.offsetX / (cell_size + 1)), y: Math.floor(e.offsetY / (cell_size + 1)) }
             cursor.current = { pos, indices }
 
-        }, [])
+        }, [cell_size])
 
         const startPainting = useCallback((e: MouseEvent) => {
 
@@ -63,16 +65,16 @@ export const World
                     //@ts-expect-error no support for dynamic paths
                     grid.current = update(grid.current, `[${y}][${x}].altitude`, altitude => altitude + state.brush.strength)
                     ctx.fillStyle = deriveColor(grid.current?.[y][x].altitude)
-                    ctx.fillRect(x * CELL_SIZE + x, y * CELL_SIZE + y, CELL_SIZE, CELL_SIZE)
+                    ctx.fillRect(x * cell_size + x, y * cell_size + y, cell_size, cell_size)
 
                 })
             }, 50)
 
-        }, [ctx, state.brush.size, state.brush.strength, updateCursor, validCoords])
+        }, [cell_size, ctx, state.brush.size, state.brush.strength, updateCursor, validCoords])
 
 
-        const widthWithGaps = state.width * CELL_SIZE + state.width
-        const heightWithGaps = state.height * CELL_SIZE + state.height
+        const widthWithGaps = state.width * cell_size + state.width
+        const heightWithGaps = state.height * cell_size + state.height
 
         const finishPainting = useCallback(() => {
 
@@ -133,12 +135,12 @@ const deriveColor
         return colors[index]
     }
 
-const CAP_DEPTH = -999
+const CAP_DEPTH = -9999
 const SEA_COLORS_AMOUNT = 4
 const DEPTH_INTERVAL = 250
 
-const CAP_ELEVATION = 999
-const ELEVATION_COLORS_AMOUNT = 12
-const ELEVATION_INTERVAL = 80
+const CAP_ELEVATION = 9999
+const ELEVATION_COLORS_AMOUNT = 99
+const ELEVATION_INTERVAL = 100
 
 export const CELL_SIZE = 12

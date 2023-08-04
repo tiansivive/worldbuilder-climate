@@ -148,7 +148,7 @@ fn main(
 
     
     let diffusion = ${k_air} * laplacian_T(cell.xy) * T;
-    debug[i] = diffusion;
+    debug[i] = 0.0;
 
     //let lat = latitude(cell.y);
     //result[i] = ${k_air} * laplacian_T(cell.xy) * T;

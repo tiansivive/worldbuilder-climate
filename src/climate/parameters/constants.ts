@@ -42,3 +42,4 @@ export const S0 = 1361 // W/m^2
 export const h_max = 8000; // max height of the topography (m)
 export const h_transfer = 30 // heat transfer coefficient
 
+export const elevation_max = 2500 //10km elevation max

@@ -1,7 +1,6 @@
 /* eslint-disable no-restricted-globals */
 import * as A from 'fp-ts/Array'
 import * as F from 'fp-ts/function'
-import * as Rec from 'fp-ts/Record'
 
 import { Matrix } from 'lib/math/types';
 
@@ -59,7 +58,7 @@ export const multipleSystemRuns
     = async (dev, cfg) => {
         const config = AtmosphereGPU.setupConfigUniforms(dev, cfg)
         const [temp_debug, temp_debug_result] = setupDebugBuffer(dev, cfg)
-        const [vel_debug, vel_debug_result] = setupDebugBuffer(dev, cfg)
+        const [vel_debug, vel_debug_result] = setupDebugBuffer(dev, cfg, 2)
         const { buffers, temperature, velocity } = AtmosphereGPU.pipelines(dev, cfg)
 
         for (let i = 0; i < cfg.simTotalSteps; i++) {
@@ -132,7 +131,7 @@ const reportState
             velocity: F.pipe(vel_grid, A.chunksOf(cfg.size.w * 2), A.map(A.chunksOf(2))),
             debug: {
                 temp: F.pipe(temp_debug_grid, A.chunksOf(cfg.size.w)),
-                vel: F.pipe(vel_debug_grid, A.chunksOf(cfg.size.w)),
+                vel: F.pipe(vel_debug_grid, A.chunksOf(cfg.size.w * 2), A.map(A.chunksOf(2))),
             }
 
         }
@@ -215,9 +214,9 @@ const setupDevice = async () => {
 }
 
 const setupDebugBuffer
-    : (device: GPUDevice, options: Config) => [GPUBuffer, GPUBuffer]
-    = (dev, cfg) => {
-        const debug = new Float32Array(cfg.size.w * cfg.size.h)
+    : (device: GPUDevice, options: Config, vectorLength?: number) => [GPUBuffer, GPUBuffer]
+    = (dev, cfg, n = 1) => {
+        const debug = new Float32Array(cfg.size.w * cfg.size.h * n)
         const buffer = dev.createBuffer({
             label: "debug",
             size: debug.byteLength,

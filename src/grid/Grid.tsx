@@ -19,15 +19,16 @@ const max = {
   atmosphere: { temp: Number.NEGATIVE_INFINITY, velocity: { u: Number.NEGATIVE_INFINITY, v: Number.NEGATIVE_INFINITY } },
   ocean: { temp: Number.NEGATIVE_INFINITY, velocity: { u: Number.NEGATIVE_INFINITY, v: Number.NEGATIVE_INFINITY } },
   ice: { temp: Number.NEGATIVE_INFINITY, velocity: { u: Number.NEGATIVE_INFINITY, v: Number.NEGATIVE_INFINITY }, thickness: 0 },
+  debug: { temp: Number.NEGATIVE_INFINITY, velocity: { u: Number.NEGATIVE_INFINITY, v: Number.NEGATIVE_INFINITY } },
 }
 const min = {
   atmosphere: { temp: Number.POSITIVE_INFINITY, velocity: { u: Number.POSITIVE_INFINITY, v: Number.POSITIVE_INFINITY } },
   ocean: { temp: Number.POSITIVE_INFINITY, velocity: { u: Number.POSITIVE_INFINITY, v: Number.POSITIVE_INFINITY } },
   ice: { temp: Number.POSITIVE_INFINITY, velocity: { u: Number.POSITIVE_INFINITY, v: Number.POSITIVE_INFINITY }, thickness: Number.POSITIVE_INFINITY },
+  debug: { temp: Number.POSITIVE_INFINITY, velocity: { u: Number.POSITIVE_INFINITY, v: Number.POSITIVE_INFINITY } },
 }
 
-let gpuMax = Number.NEGATIVE_INFINITY
-let gpuMin = Number.POSITIVE_INFINITY
+
 
 function App() {
 
@@ -39,9 +40,9 @@ function App() {
     brush: DEFAULT_BRUSH,
   })
 
-  const [system, setSystem] = useState<System>()
 
-  const [gpuGrid, setGridGPU] = useState<Matrix<number>>()
+
+  const [gpuGrids, setGPUGrids] = useState<{ temperature: Matrix<number>, velocity: Matrix<Velocity>, debug: Matrix<Velocity> }>()
   const [done, setDone] = useState<boolean>(false)
 
   const sim: Worker = useMemo(() => {
@@ -58,42 +59,20 @@ function App() {
 
       if (e.data.type === "GPU_SYSTEM") {
         console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
-        gpuMax = maxMatrix(gpuMax, e.data.system.temperature)
-        gpuMin = minMatrix(gpuMin, e.data.system.temperature)
-        return setGridGPU(e.data.system.temperature)
+        max.atmosphere.temp = maxMatrix(max.atmosphere.temp, e.data.system.temperature)
+        min.atmosphere.temp = minMatrix(min.atmosphere.temp, e.data.system.temperature)
+
+        const uv = (e.data.system.velocity as Matrix<[number, number]>).map(row => row.map(([u, v]) => ({ u, v })))
+        max.atmosphere.velocity = maxVelocity(max.atmosphere.velocity, uv)
+        min.atmosphere.velocity = minVelocity(min.atmosphere.velocity, uv)
+
+        const debug_uv = (e.data.system.debug.vel as Matrix<[number, number]>).map(row => row.map(([u, v]) => ({ u, v })))
+        max.debug.velocity = maxVelocity(max.debug.velocity, debug_uv)
+        min.debug.velocity = minVelocity(min.debug.velocity, debug_uv)
+
+        return setGPUGrids({ temperature: e.data.system.temperature, velocity: uv, debug: debug_uv })
       }
-      // if (e.data.type === "GPU") {
-      //   console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
-      //   //console.log("data", e.data.grid)
-      //   gpuMax = maxMatrix(gpuMax, e.data.grid)
-      //   gpuMin = minMatrix(gpuMin, e.data.grid)
-      //   return setGridGPU(e.data.grid)
-      // }
-      // console.log("message", e)
-      // const system: System = e.data.system
 
-      // max.atmosphere.velocity = maxVelocity(max.atmosphere.velocity, system.fields.atmosphere.velocity)
-      // min.atmosphere.velocity = minVelocity(min.atmosphere.velocity, system.fields.atmosphere.velocity)
-      // max.atmosphere.temp = maxMatrix(max.atmosphere.temp, system.fields.atmosphere.temperature)
-      // min.atmosphere.temp = minMatrix(min.atmosphere.temp, system.fields.atmosphere.temperature)
-
-      // max.ocean.velocity = maxVelocity(max.ocean.velocity, system.fields.ocean.velocity)
-      // min.ocean.velocity = minVelocity(min.ocean.velocity, system.fields.ocean.velocity)
-      // max.ocean.temp = maxMatrix(max.ocean.temp, system.fields.ocean.temperature)
-      // min.ocean.temp = minMatrix(min.ocean.temp, system.fields.ocean.temperature)
-
-      // max.ice.velocity = maxVelocity(max.ice.velocity, system.fields.ice.velocity)
-      // min.ice.velocity = minVelocity(min.ice.velocity, system.fields.ice.velocity)
-      // max.ice.temp = maxMatrix(max.ice.temp, system.fields.ice.temperature)
-      // min.ice.temp = minMatrix(min.ice.temp, system.fields.ice.temperature)
-      // max.ice.thickness = maxMatrix(max.ice.thickness, system.fields.ice.thickness)
-      // min.ice.thickness = minMatrix(min.ice.thickness, system.fields.ice.thickness)
-
-
-      // console.log("MAX:", max)
-      // console.log("MIN:", min)
-
-      // setSystem(system)
 
 
     }
@@ -104,7 +83,7 @@ function App() {
     sim.postMessage({ type: "RUN", width: state.width, height: state.height, elevation: toElevation(state.grid) })
   }, [sim, state.grid, state.height, state.width])
 
-  if (done) console.log(gpuGrid)
+  if (done) console.log(gpuGrids)
   return (
     <div >
       <header>
@@ -143,30 +122,16 @@ function App() {
           <button onClick={ _ => simulateWinds() }>Calculate winds</button>
         </section>
       </header>
-      { gpuGrid &&
-        <section>
-          <Temperature field={ gpuGrid } size={ { h: state.height, w: state.width } } max={ gpuMax } min={ gpuMin } />
+      { gpuGrids &&
+        <section style={ grids }>
+          <Temperature field={ gpuGrids.temperature } size={ { h: state.height, w: state.width } } max={ max.atmosphere.temp } min={ min.atmosphere.temp } />
+          <hr />
+          <Velocities field={ gpuGrids.velocity } size={ { h: state.height, w: state.width } } max={ max.atmosphere.velocity } min={ min.atmosphere.velocity } />
+          <hr />
+          <Velocities field={ gpuGrids.debug } size={ { h: state.height, w: state.width } } max={ max.debug.velocity } min={ min.debug.velocity } />
+          {/* <Thickness field={ system.fields.ice.thickness } size={ system.size } max={ max.ice.thickness } min={ min.ice.thickness } /> */ }
         </section> }
-      <section>
-        { system &&
-          <div>
-            <h3>Ocean</h3>
-            <Velocities field={ system.fields.ocean.velocity } size={ system.size } max={ max.ocean.velocity } min={ min.ocean.velocity } />
-            <Temperature field={ system.fields.ocean.temperature } size={ system.size } max={ max.ocean.temp } min={ min.ocean.temp } />
-            <hr />
 
-            <h3>Atmosphere</h3>
-            <Velocities field={ system.fields.atmosphere.velocity } size={ system.size } max={ max.atmosphere.velocity } min={ min.atmosphere.velocity } />
-            <Temperature field={ system.fields.atmosphere.temperature } size={ system.size } max={ max.atmosphere.temp } min={ min.atmosphere.temp } />
-            <hr />
-
-            <h3>Ice</h3>
-            <Velocities field={ system.fields.ice.velocity } size={ system.size } max={ max.ice.velocity } min={ min.ice.velocity } />
-            <Temperature field={ system.fields.ice.temperature } size={ system.size } max={ max.ice.temp } min={ min.ice.temp } />
-            <Thickness field={ system.fields.ice.thickness } size={ system.size } max={ max.ice.thickness } min={ min.ice.thickness } />
-          </div>
-        }
-      </section>
       <section>
 
         <World state={ state } setState={ setState } />
@@ -203,7 +168,7 @@ export const Velocities = ({ field, size, min, max }: VelocityProps) =>
 
 type TemperatureProps = { field: Matrix<number>, size: System["size"], min: number, max: number }
 export const Temperature = ({ field, size, min, max }: TemperatureProps) =>
-  <div style={ uv_maps }>
+  <div style={ temp_maps }>
     <p>Temperature</p>
     <Canvas state={ field } width={ size.w } height={ size.h } deriveColor={ deriveColor("T", { min, max }) as any } />
   </div >
@@ -229,10 +194,20 @@ const uv_maps: CSSProperties = {
   display: "flex",
   width: "100%",
   flexWrap: "wrap",
-  justifyContent: "space-evenly"
+  justifyContent: "flex-start",
+  gap: "2em"
+}
+const temp_maps: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-evenly",
+  alignItems: "flex-start"
 }
 
+const grids: CSSProperties = {
+  padding: "0 5em"
 
+}
 
 const toElevation
   : (grid: Grid) => Matrix<number>
@@ -258,8 +233,8 @@ const deriveColor
   : (component: "U" | "V" | "T" | "I", endpoints: { min: number, max: number }) => (n: number) => string
   = (component, { min, max }) => n => {
     let fn
-    if (component === "U") fn = scale(["cyan", "white", "magenta"]).domain([min, max]).mode("lab")
-    if (component === "V") fn = scale(["yellow", "white", "red"]).domain([min, max]).mode("lab")
+    if (component === "U") fn = scale(["cyan", "black", "magenta"]).domain([min, max]).mode("lab")
+    if (component === "V") fn = scale(["yellow", "black", "red"]).domain([min, max]).mode("lab")
     if (component === "T") fn = scale(["blue", "green", "red"]).domain([min, max]).mode("lab")
     if (component === "I") fn = scale(["black", "white"]).domain([min, max]).mode("lab")
 
@@ -283,6 +258,6 @@ export type Cell = { altitude: number }
 
 type Brush = { size: number, strength: number }
 
-const DEFAULT_WIDTH = 64, DEFAULT_HEIGHT = 64
-const DEFAULT_BRUSH: Brush = { size: 1, strength: 10 }
+const DEFAULT_WIDTH = 32, DEFAULT_HEIGHT = 32
+const DEFAULT_BRUSH: Brush = { size: 2, strength: 50 }
 

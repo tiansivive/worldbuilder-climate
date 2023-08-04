@@ -1,4 +1,4 @@
-import { alpha_drag, gamma, lambda_base, R } from "climate/parameters/constants"
+import { alpha_drag, elevation_max, gamma, lambda_base, R } from "climate/parameters/constants"
 
 export const code = `
 struct Params {
@@ -22,7 +22,7 @@ struct Params {
 @group(0) @binding(3) var<storage>             velocity     : array<vec2f>; 
 
 @group(0) @binding(4) var<storage, read_write> result       : array<vec2f>;
-@group(0) @binding(5) var<storage, read_write> debug       : array<f32>;
+@group(0) @binding(5) var<storage, read_write> debug        : array<vec2f>;
 
 
         
@@ -130,7 +130,7 @@ fn normal(p: vec2u) -> vec2f {
     }
     
     // minus due to rotating clockwise, as y = 0 means the top row of the grid
-    return vec2f(g.y, -g.x) / len; 
+    return vec2f(g.y, g.x) / len; 
 }
 
 
@@ -146,8 +146,15 @@ fn topographical_forcing(p: vec2u) -> vec2f {
     }
 
     let i = index(p);
-    let n = normal(p);
-    return -${gamma} * (elevation[i] / params.h_max) * dot(velocity[i], n) * n;
+    var n = normal(p);
+    if(n.x > 1){
+        n.x = 1.0;
+    }
+    if(n.y > 1){
+        n.y = 1.0;
+    }
+
+    return ${gamma} * (min(elevation[i], ${elevation_max}) / ${elevation_max}) * dot(velocity[i], n) * n;
 }
 
 @compute @workgroup_size(8,8)
@@ -163,7 +170,7 @@ fn main(
     let fc = - coriolis(cell.xy) * crossK(velocity[i]);
     let pressure = - ${R} * gradT;
     let drag_effect = - drag(cell.xy) * velocity[i];
-    let topo = - topographical_forcing(cell.xy);
+    let topo = -topographical_forcing(cell.xy);
     let DT = fc + pressure + drag_effect + topo;
    
     // advection is dot product of vel and nabla times v
@@ -171,7 +178,7 @@ fn main(
     let advection = velocity[i].x * gradV.xy + velocity[i].y * gradV.zw;
 
     result[i] = velocity[i] + DT - advection;
-    debug[i] = 1.0;
+    debug[i] = topo;
     
     //result[i] = normal(cell.xy);
    
