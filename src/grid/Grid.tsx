@@ -58,19 +58,19 @@ function App() {
       }
 
       if (e.data.type === "GPU_SYSTEM") {
-        console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
-        max.atmosphere.temp = maxMatrix(max.atmosphere.temp, e.data.system.temperature)
-        min.atmosphere.temp = minMatrix(min.atmosphere.temp, e.data.system.temperature)
+        // console.log("Iteration:", e.data.iteration, "Time elapsed:", (e.data.iteration / 24).toFixed(2), "days", (e.data.iteration / 24 / 30).toFixed(2), "months")
+        // max.atmosphere.temp = maxMatrix(max.atmosphere.temp, e.data.system.temperature)
+        // min.atmosphere.temp = minMatrix(min.atmosphere.temp, e.data.system.temperature)
 
-        const uv = (e.data.system.velocity as Matrix<[number, number]>).map(row => row.map(([u, v]) => ({ u, v })))
-        max.atmosphere.velocity = maxVelocity(max.atmosphere.velocity, uv)
-        min.atmosphere.velocity = minVelocity(min.atmosphere.velocity, uv)
+        // const uv = (e.data.system.velocity as Matrix<[number, number]>).map(row => row.map(([u, v]) => ({ u, v })))
+        // max.atmosphere.velocity = maxVelocity(max.atmosphere.velocity, uv)
+        // min.atmosphere.velocity = minVelocity(min.atmosphere.velocity, uv)
 
-        const debug_uv = (e.data.system.debug.vel as Matrix<[number, number]>).map(row => row.map(([u, v]) => ({ u, v })))
-        max.debug.velocity = maxVelocity(max.debug.velocity, debug_uv)
-        min.debug.velocity = minVelocity(min.debug.velocity, debug_uv)
+        // const debug_uv = (e.data.system.debug.vel as Matrix<[number, number]>).map(row => row.map(([u, v]) => ({ u, v })))
+        // max.debug.velocity = maxVelocity(max.debug.velocity, debug_uv)
+        // min.debug.velocity = minVelocity(min.debug.velocity, debug_uv)
 
-        return setGPUGrids({ temperature: e.data.system.temperature, velocity: uv, debug: debug_uv })
+        // return setGPUGrids({ temperature: e.data.system.temperature, velocity: uv, debug: debug_uv })
       }
 
 

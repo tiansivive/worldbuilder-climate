@@ -1,11 +1,15 @@
 /* eslint-disable no-restricted-globals */
 import * as A from 'fp-ts/Array'
 import * as F from 'fp-ts/function'
+import * as R from 'fp-ts/Record'
+import _ from 'lodash/fp';
 
 import { Matrix } from 'lib/math/types';
 
 import { dt } from './parameters/constants';
 import * as AtmosphereGPU from './systems/atmosphere/pipelines';
+import { BufferSet, ID, PROPERTY, setupConfigUniforms, setupElevationBuffer, SYSTEM } from './systems/common';
+import * as OceanGPU from './systems/ocean/pipelines';
 
 export type Params = {
     type: "RUN",
@@ -15,7 +19,23 @@ export type Params = {
 }
 
 
-type Config = AtmosphereGPU.Config & {
+export type Config = {
+    /** Meters */
+    circumference: number,
+    /** Radians */
+    axial_tilt: number,
+    /** In days */
+    orbit_period: number,
+
+    /** current day of the year */
+    day_of_year: number,
+    /** Degrees per second */
+    angular_speed: number,
+    /** seconds */
+    time: number,
+    step: { dx: number, dy: number },
+    size: { w: number, h: number },
+    elevation: Matrix<number>
     simTotalSteps: number
 }
 
@@ -56,50 +76,56 @@ self.onmessage = (e: MessageEvent<Params>) => {
 export const multipleSystemRuns
     : (device: GPUDevice, cfg: Config) => Promise<void>
     = async (dev, cfg) => {
-        const config = AtmosphereGPU.setupConfigUniforms(dev, cfg)
-        const [temp_debug, temp_debug_result] = setupDebugBuffer(dev, cfg)
-        const [vel_debug, vel_debug_result] = setupDebugBuffer(dev, cfg, 2)
-        const { buffers, temperature, velocity } = AtmosphereGPU.pipelines(dev, cfg)
+        const config = setupConfigUniforms(dev, cfg)
+        const elevation = setupElevationBuffer(dev, cfg)
+
+        const atmosphere = AtmosphereGPU.setup(dev, cfg)
+        const ocean = OceanGPU.setup(dev, cfg)
+
 
         for (let i = 0; i < cfg.simTotalSteps; i++) {
             config.values[3] = Math.floor(i / 24) % cfg.orbit_period
             config.values[5] = (i % (24 * cfg.orbit_period)) * dt // update time
             dev.queue.writeBuffer(config.buffer, 0, config.values);
 
-            const temp_in = buffers.temperature[i % 2]
-            const temp_out = buffers.temperature[(i + 1) % 2]
-            const temp_result = buffers.temperature[2]
 
-            const velocity_in = buffers.velocity[i % 2]
-            const velocity_out = buffers.velocity[(i + 1) % 2]
-            const velocity_result = buffers.velocity[2]
+            const cms = [
+                AtmosphereGPU.pass.temperature(i, dev, cfg, atmosphere.temperature.pipeline, atmosphere.temperature.layout, [config.buffer, elevation], {
+                    "atmosphere:temperature": atmosphere.temperature.buffers,
+                    "atmosphere:velocity": atmosphere.velocity.buffers,
+                    "ocean:temperature": ocean.temperature.buffers
+                }),
+                AtmosphereGPU.pass.velocity(i, dev, cfg, atmosphere.velocity.pipeline, atmosphere.velocity.layout, [config.buffer, elevation], {
+                    "atmosphere:temperature": atmosphere.temperature.buffers,
+                    "atmosphere:velocity": atmosphere.velocity.buffers,
+                }),
+                OceanGPU.pass.temperature(i, dev, cfg, ocean.temperature.pipeline, ocean.temperature.layout, [config.buffer, elevation], {
+                    "ocean:temperature": ocean.temperature.buffers,
+                    "ocean:velocity": ocean.velocity.buffers,
+                    "atmosphere:temperature": atmosphere.temperature.buffers,
+                    "atmosphere:velocity": atmosphere.velocity.buffers
+                }),
+                OceanGPU.pass.velocity(i, dev, cfg, ocean.velocity.pipeline, ocean.velocity.layout, [config.buffer, elevation], {
+                    "ocean:temperature": ocean.temperature.buffers,
+                    "ocean:velocity": ocean.velocity.buffers,
+                    "atmosphere:velocity": atmosphere.velocity.buffers
+                }),
+            ]
 
-            const temp_cmd = setupPass(dev, cfg, {
-                inputBuffers: [config.buffer, temp_in, velocity_in],
-                outputBuffers: [temp_out, temp_debug],
-                resultBuffers: [temp_result, temp_debug_result],
-                layout: temperature.bindGroupLayout,
-                pipeline: temperature.pipeline,
-                labels: { bindGroup: "temperature" }
-            })
 
-            const vel_cmd = setupPass(dev, cfg, {
-                inputBuffers: [config.buffer, buffers.elevation, temp_in, velocity_in],
-                outputBuffers: [velocity_out, vel_debug],
-                resultBuffers: [velocity_result, vel_debug_result],
-                layout: velocity.bindGroupLayout,
-                pipeline: velocity.pipeline,
-                labels: { bindGroup: "velocity" }
-            })
 
             // End frame by passing array of command buffers to command queue for execution
-            dev.queue.submit([temp_cmd, vel_cmd]);
+            dev.queue.submit(cms);
 
             if (i % (24 * 10) === 0) {
                 const system = await reportState(
                     cfg, i,
-                    [temp_result, temp_debug_result],
-                    [velocity_result, vel_debug_result]
+                    {
+                        "atmosphere:temperature": atmosphere.temperature.buffers.slice(3, 5) as [GPUBuffer, GPUBuffer],
+                        "atmosphere:velocity": atmosphere.velocity.buffers.slice(3, 5) as [GPUBuffer, GPUBuffer],
+                        "ocean:temperature": ocean.temperature.buffers.slice(3, 5) as [GPUBuffer, GPUBuffer],
+                        "ocean:velocity": ocean.velocity.buffers.slice(3, 5) as [GPUBuffer, GPUBuffer],
+                    }
                 );
                 console.log(system)
             }
@@ -108,33 +134,33 @@ export const multipleSystemRuns
         }
     }
 
+
 const reportState
-    : (cfg: Config, i: number, temp_buffers: [GPUBuffer, GPUBuffer], velocity_buffers: [GPUBuffer, GPUBuffer]) => unknown
-    = async (cfg, iteration, [t_out, t_debug], [v_out, v_debug]) => {
-        await Promise.all([
-            t_out.mapAsync(GPUMapMode.READ, 0, t_out.size),
-            t_debug.mapAsync(GPUMapMode.READ, 0, t_debug.size),
-            v_out.mapAsync(GPUMapMode.READ, 0, v_out.size),
-            v_debug.mapAsync(GPUMapMode.READ, 0, v_debug.size),
-        ]);
+    : <K extends ID>(cfg: Config, i: number, buffers: Record<K, [GPUBuffer, GPUBuffer]>) => unknown
+    = async (cfg, iteration, buffers) => {
 
-        const bufs = [t_out, t_debug, v_out, v_debug] as const;
-        const [temp_grid, temp_debug_grid, vel_grid, vel_debug_grid] = bufs
-            .map(buf => {
-                const data = buf.getMappedRange(0, buf.size).slice(0);
-                buf.unmap();
-                return Array.from(new Float32Array(data))
-            })
 
-        const system = {
-            temperature: F.pipe(temp_grid, A.chunksOf(cfg.size.w)),
-            velocity: F.pipe(vel_grid, A.chunksOf(cfg.size.w * 2), A.map(A.chunksOf(2))),
-            debug: {
-                temp: F.pipe(temp_debug_grid, A.chunksOf(cfg.size.w)),
-                vel: F.pipe(vel_debug_grid, A.chunksOf(cfg.size.w * 2), A.map(A.chunksOf(2))),
+        const reads = Object.values<[GPUBuffer, GPUBuffer]>(buffers).flat().map(b => b.mapAsync(GPUMapMode.READ, 0, b.size))
+        await Promise.all(reads)
+
+        const extract = (buf: GPUBuffer) => {
+            const data = buf.getMappedRange(0, buf.size).slice(0);
+            buf.unmap();
+            return Array.from(new Float32Array(data))
+        }
+
+        const system = R.FunctorWithIndex.mapWithIndex(buffers, (k, bufs) => {
+            if (k.match("temperature")) return {
+                values: F.pipe(bufs[0], extract, A.chunksOf(cfg.size.w)),
+                debug: F.pipe(bufs[1], extract, A.chunksOf(cfg.size.w)),
+            }
+            if (k.match("velocity")) return {
+                values: F.pipe(bufs[0], extract, A.chunksOf(cfg.size.w * 2), A.map(A.chunksOf(2))),
+                debug: F.pipe(bufs[1], extract, A.chunksOf(cfg.size.w * 2), A.map(A.chunksOf(2))),
             }
 
-        }
+        })
+
 
 
         self.postMessage({ type: "GPU_SYSTEM", iteration, system });
@@ -147,14 +173,6 @@ const reportState
 
 
 
-
-export const pingPongBufferDesc
-    : (label: string, size: number) => GPUBufferDescriptor
-    = (label, size) => ({
-        label,
-        size,
-        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
-    })
 
 
 
@@ -213,22 +231,4 @@ const setupDevice = async () => {
 
 }
 
-const setupDebugBuffer
-    : (device: GPUDevice, options: Config, vectorLength?: number) => [GPUBuffer, GPUBuffer]
-    = (dev, cfg, n = 1) => {
-        const debug = new Float32Array(cfg.size.w * cfg.size.h * n)
-        const buffer = dev.createBuffer({
-            label: "debug",
-            size: debug.byteLength,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
-        })
-        const staging = dev.createBuffer({
-            label: "debug_staging",
-            size: debug.byteLength,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
-        })
-
-
-        return [buffer, staging]
-    }
 

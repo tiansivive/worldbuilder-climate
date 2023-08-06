@@ -17,11 +17,12 @@ struct Params {
 
 @group(0) @binding(0) var<uniform>             params       : Params;
 
-@group(0) @binding(1) var<storage>             temperature  : array<f32>;
-@group(0) @binding(2) var<storage>             velocity     : array<vec2f>; 
+@group(0) @binding(1) var<storage>             air_temp  : array<f32>;
+@group(0) @binding(2) var<storage>             water_temp  : array<f32>;
+@group(0) @binding(3) var<storage>             air_velocity     : array<vec2f>; 
 
-@group(0) @binding(3) var<storage, read_write> result       : array<f32>;
-@group(0) @binding(4) var<storage, read_write> debug       : array<f32>;
+@group(0) @binding(4) var<storage, read_write> result       : array<f32>;
+@group(0) @binding(5) var<storage, read_write> debug       : array<f32>;
 
 
         
@@ -62,8 +63,8 @@ fn neighbourIndices(p: vec2u) -> vec4u {
 fn grad_temp(p: vec2u) -> vec2f {
     let indices = neighbourIndices(p);
 
-    let gradX = (temperature[indices.y] - temperature[indices.x]) / (2.0 * params.dx);   
-    let gradY = (temperature[indices.w] - temperature[indices.z]) / (2.0 * params.dy);
+    let gradX = (air_temp[indices.y] - air_temp[indices.x]) / (2.0 * params.dx);   
+    let gradY = (air_temp[indices.w] - air_temp[indices.z]) / (2.0 * params.dy);
 
     return vec2f(gradX, gradY);
 }
@@ -73,8 +74,8 @@ fn laplacian_T(p: vec2u) -> f32 {
     let indices = neighbourIndices(p);
     let i = index(p.xy);
 
-    let lap = (temperature[indices.y] - 2 * temperature[i] + temperature[indices.x]) / (params.dx * params.dx) 
-        + (temperature[indices.w] - 2 * temperature[i] + temperature[indices.z]) / (params.dy * params.dy);
+    let lap = (air_temp[indices.y] - 2 * air_temp[i] + air_temp[indices.x]) / (params.dx * params.dx) 
+        + (air_temp[indices.w] - 2 * air_temp[i] + air_temp[indices.z]) / (params.dy * params.dy);
 
     return lap;
 
@@ -138,11 +139,11 @@ fn main(
     @builtin(local_invocation_id) local_id : vec3u
 ) {
     let i = index(cell.xy);
-    let T = temperature[i];
+    let T = air_temp[i];
     let gradT = grad_temp(cell.xy);
     
     let DT = Q_air(cell.xy, T) / (${rho_air}*${cp_air});
-    let advection = dot(velocity[i], gradT);
+    let advection = dot(air_velocity[i], gradT);
     
     result[i] = T + DT - advection;
 
