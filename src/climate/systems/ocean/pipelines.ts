@@ -1,7 +1,7 @@
 import { T0 } from "climate/parameters/constants"
 import { Config, setupPass } from "climate/sim"
 
-import { BufferSet, mkPipeline, PassConfig, PROPERTY, setupBuffers } from "../common"
+import { BufferSet, mkPipeline, PassConfig, PROPERTY, setupBuffers, steppedIncrement } from "../common"
 import * as ShaderT from './temperature.wgsl'
 import * as ShaderV from './velocity.wgsl'
 
@@ -17,11 +17,11 @@ export const setup
     = (dev, cfg) => {
         return {
             temperature: {
-                buffers: setupBuffers(dev, cfg, "ocean", "temperature", 1, T0),
+                buffers: setupBuffers(dev, cfg, "ocean", "temperature", 1, steppedIncrement(T0 + 5, 25)),
                 ...mkPipeline(dev, ShaderT.code, "ocean", "temperature", { uniforms: 1, inputs: 4, outputs: 2 }),
             },
             velocity: {
-                buffers: setupBuffers(dev, cfg, "ocean", "velocity", 2, 0.0),
+                buffers: setupBuffers(dev, cfg, "ocean", "velocity", 2, () => 0.0),
                 ...mkPipeline(dev, ShaderV.code, "ocean", "velocity", { uniforms: 1, inputs: 4, outputs: 2 })
             }
         }

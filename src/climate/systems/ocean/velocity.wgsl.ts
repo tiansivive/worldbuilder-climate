@@ -60,6 +60,14 @@ fn neighbourIndices(p: vec2u) -> vec4u {
     return vec4(left, right, up, down);
 }
 
+fn water_velocity(i: u32) -> vec2f {
+    if(elevation[i] > 0) {
+        return vec2f(0.0);
+    }
+    
+    return water_vel[i];
+}
+
 
 fn grad_temp(p: vec2u) -> vec2f {
     let indices = neighbourIndices(p);
@@ -81,8 +89,8 @@ fn grad_elevation(p: vec2u) -> vec2f {
 fn grad_velocity(p: vec2u) -> vec4f {
     let indices = neighbourIndices(p);
 
-    let gradX = (water_vel[indices.y] - water_vel[indices.x]) / (2.0 * params.dx);   
-    let gradY = (water_vel[indices.w] - water_vel[indices.z]) / (2.0 * params.dy);
+    let gradX = (water_velocity(indices.y) - water_velocity(indices.x)) / (2.0 * params.dx);   
+    let gradY = (water_velocity(indices.w) - water_velocity(indices.z)) / (2.0 * params.dy);
 
     // vec4(du_dx, dv_dx, du_dy, dv_dy)
     return vec4f(gradX.x, gradX.y, gradY.x, gradY.y);
@@ -135,11 +143,18 @@ fn main(
     @builtin(local_invocation_id) local_id : vec3u
 ) {
     let i = index(cell.xy);
+
+    if(elevation[i] > 0){
+        result[i] = vec2f(0.0);
+        return;
+    }
+
     let T = water_temp[i];
+    let V = water_velocity(i);
     let gradT = grad_temp(cell.xy);
     let gradV = grad_velocity(cell.xy);
 
-    let fc = - coriolis(cell.xy) * crossK(water_vel[i]);
+    let fc = - coriolis(cell.xy) * crossK(V);
     let pressure = - ${g} * ${beta_water} * gradT;
     let stress = - wind_stress(i)/${rho_water};
 
@@ -148,10 +163,10 @@ fn main(
    
     // advection is dot product of vel and nabla times v
     // We compute gradV as the xy derivatives for uv, so grad.xy is uv_dx, grad.zw is uv_dy
-    let advection = water_vel[i].x * gradV.xy + water_vel[i].y * gradV.zw;
+    let advection = V.x * gradV.xy + V.y * gradV.zw;
 
-    result[i] = water_vel[i] + DT - advection;
-    //debug[i] = topo;
+    result[i] = V + DT - advection;
+    debug[i] = stress;
     
     //result[i] = normal(cell.xy);
    

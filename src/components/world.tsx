@@ -6,8 +6,8 @@ import { useCallback, useEffect, useRef } from "react"
 import { set } from "lib/objects/set"
 import { update } from "lib/objects/update"
 
-import { affectedCellIndices, Coords } from "./brush"
-import { Grid, State } from "./Grid"
+import { affectedCellIndices, Coords } from "../grid/Brush"
+import { Grid, State } from "../grid/Grid"
 
 
 
@@ -143,4 +143,4 @@ const CAP_ELEVATION = 9999
 const ELEVATION_COLORS_AMOUNT = 99
 const ELEVATION_INTERVAL = 100
 
-export const CELL_SIZE = 12
+export const CELL_SIZE = 6

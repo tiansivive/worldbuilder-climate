@@ -129,8 +129,7 @@ fn normal(p: vec2u) -> vec2f {
     if(len == 0){
         return vec2f(0.0, 0.0);
     }
-    
-    // minus due to rotating clockwise, as y = 0 means the top row of the grid
+
     return vec2f(g.y, g.x) / len; 
 }
 
@@ -179,7 +178,7 @@ fn main(
     let advection = velocity[i].x * gradV.xy + velocity[i].y * gradV.zw;
 
     result[i] = velocity[i] + DT - advection;
-    debug[i] = topo;
+    debug[i] = drag_effect;
     
     //result[i] = normal(cell.xy);
    

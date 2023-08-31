@@ -23,7 +23,7 @@ export const cp_water = 3993; // specific heat capacity of water (J/kg/K)
 export const cp_ice = 2093; // specific heat capacity of ice (J/kg/K)
 /** Stefan - Boltzmann constant (W/m^2/K^4) */
 export const sigma = 5.67e-8
-export const emissivity = 0.75
+export const emissivity = 0.7
 
 // Coefficients for processes
 
@@ -36,7 +36,7 @@ export const beta = 0.00015;  // Thermal expansion coefficient of sea water (1/K
 export const gamma = 0.02; // parameter for the topographical forcing
 export const alpha_drag = 0.01; // parameter for the drag coefficient
 /** Transmission rate losses through atmosphere */
-export const tau_tr_air = 0.6
+export const tau_tr_air = 0.65
 export const S0 = 1361 // W/m^2 
 
 export const h_max = 10000; // max height of the topography (m)

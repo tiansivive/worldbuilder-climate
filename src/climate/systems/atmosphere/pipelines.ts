@@ -1,7 +1,7 @@
 import { T0 } from "climate/parameters/constants";
 import { Config, setupPass } from "climate/sim";
 
-import { BufferSet, mkPipeline, PassConfig, PROPERTY, setupBuffers } from "../common";
+import { BufferSet, mkPipeline, PassConfig, PROPERTY, setupBuffers, steppedIncrement } from "../common";
 import * as ShaderT from './temperature.wgsl'
 import * as ShaderV from './velocity.wgsl'
 
@@ -15,13 +15,14 @@ type Deps = {
 export const setup
     : (device: GPUDevice, config: Config) => Record<Extract<PROPERTY, "temperature" | "velocity">, Deps>
     = (dev, cfg) => {
+
         return {
             temperature: {
-                buffers: setupBuffers(dev, cfg, "atmosphere", "temperature", 1, T0),
+                buffers: setupBuffers(dev, cfg, "atmosphere", "temperature", 1, steppedIncrement(T0 + 10, 30)),
                 ...mkPipeline(dev, ShaderT.code, "atmosphere", "temperature", { uniforms: 1, inputs: 3, outputs: 2 }),
             },
             velocity: {
-                buffers: setupBuffers(dev, cfg, "atmosphere", "velocity", 2, 0.0),
+                buffers: setupBuffers(dev, cfg, "atmosphere", "velocity", 2, () => 0.0),
                 ...mkPipeline(dev, ShaderV.code, "atmosphere", "velocity", { uniforms: 1, inputs: 3, outputs: 2 })
             }
         }

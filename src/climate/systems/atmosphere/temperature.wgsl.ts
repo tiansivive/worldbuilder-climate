@@ -1,4 +1,4 @@
-import { albedo_atmosphere, cp_air, emissivity, k_air, rho_air, S0, sigma } from "climate/parameters/constants"
+import { albedo_atmosphere, cp_air, emissivity, h_transfer, k_air, rho_air, S0, sigma } from "climate/parameters/constants"
 
 export const code = `
 struct Params {
@@ -124,12 +124,17 @@ fn Q_sol(p: vec2u) -> f32 {
     return Q;
 }
 
+fn Qx_air(i: u32) -> f32 {
+    let diff = air_temp[i] - water_temp[i];
+    return ${h_transfer} * diff;
+}
+
 fn Q_air(p: vec2u, temp: f32) -> f32 {
     let solar_radiance = Q_sol(p);
     let radiative_loss = ${sigma} * pow(temp, 4);
     let diffusion = ${k_air} * laplacian_T(p) * temp;
 
-    return solar_radiance - ${emissivity} * radiative_loss + diffusion;
+    return solar_radiance - ${emissivity} * radiative_loss + (1 - ${emissivity}) * 0.5 * radiative_loss - Qx_air(index(p));
 
 }
 

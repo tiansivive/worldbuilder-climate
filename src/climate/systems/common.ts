@@ -69,9 +69,9 @@ export const setupConfigUniforms
     }
 
 export const setupBuffers
-    : (device: GPUDevice, config: Config, system: SYSTEM, property: PROPERTY, vectorSize: 1 | 2 | 3 | 4, initialValue: number) => BufferSet
+    : (device: GPUDevice, config: Config, system: SYSTEM, property: PROPERTY, vectorSize: 1 | 2 | 3 | 4, initialValue: (i: number, size: number) => number) => BufferSet
     = (dev, cfg, system, property, size, ini) => {
-        const buf = new Float32Array(cfg.size.w * cfg.size.h * size).fill(ini);
+        const buf = new Float32Array(cfg.size.w * cfg.size.h * size).map((_, i) => ini(Math.floor(i / (cfg.size.w * size)), cfg.size.h));
         const buffers: BufferSet = [
             dev.createBuffer(pingPongBufferDesc(`${system}:${property}:input`, buf.byteLength)),
             dev.createBuffer(pingPongBufferDesc(`${system}:${property}:output`, buf.byteLength)),
@@ -115,6 +115,13 @@ export const stagingBufferDesc
         usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     })
 
+
+export const steppedIncrement = (baseValue: number, range: number) => (i: number, size: number) => {
+    const step = range / (size / 2)
+    const factor = i < size / 2 ? i : size - i
+
+    return baseValue + factor * step;
+}
 
 /** 
  * Set of buffers for a ping pong approach\
